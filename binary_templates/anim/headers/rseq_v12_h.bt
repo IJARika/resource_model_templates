@@ -1,0 +1,225 @@
+//------------------------------------------------
+//--- 010 Editor v12.0.1 Binary Template
+//
+//      File: rseq_v12_h.bt
+//   Authors: Rika
+//   Version: 0.3
+//   Purpose: Respawn Sequence Files
+//  Category: Animation
+// File Mask: *.rseq
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+#ifndef RSEQ_12_H
+#define RSEQ_12_H
+
+struct mstudioseqdesc_t
+{
+	uint16_t szlabelindex;
+
+	uint16_t szactivitynameindex;
+
+	int flags; // looping/non-looping flags
+
+	uint16_t activity; // initialized at loadtime to game DLL values
+	uint16_t actweight;
+
+	uint16_t numevents;
+	uint16_t eventindex;
+
+	Vector bbmin; // per sequence bounding box
+	Vector bbmax;
+
+	uint16_t numblends;
+
+	// Index into array of shorts which is groupsize[0] x groupsize[1] in length
+	uint16_t animindexindex;
+
+	//short movementindex; // [blend] float array for blended movement
+	short paramindex[2]; // X, Y, Z, XR, YR, ZR
+	float paramstart[2]; // local (0..1) starting value
+	float paramend[2]; // local (0..1) ending value
+	//short paramparent;
+
+	float fadeintime; // ideal cross fate in time (0.2 default)
+	float fadeouttime; // ideal cross fade out time (0.2 default)
+
+	// animseq/humans/class/medium/pilot_medium_bangalore/bangalore_freefall.rseq
+	uint16_t localentrynode; // transition node at entry
+	uint16_t localexitnode; // transition node at exit
+
+	uint16_t numikrules;
+
+	uint16_t numautolayers;
+	uint16_t autolayerindex;
+
+	uint16_t weightlistindex;
+
+	uint8_t groupsize[2];
+
+	// animseq/humans/class/medium/mp_pilot_medium_core/medium_bow_charge_pose.rseq
+	uint16_t posekeyindex;
+
+	// never used?
+	uint16_t numiklocks;
+	uint16_t iklockindex;
+
+	// whar
+	uint16_t unk_5C;
+
+	// animseq/weapons/octane_epipen/ptpov_octane_epipen_held/drain_fluid_layer.rseq
+	uint16_t cycleposeindex; // index of pose parameter to use as cycle index
+
+	uint16_t activitymodifierindex;
+	uint16_t numactivitymodifiers;
+
+	int ikResetMask;
+	int unk1;
+
+	uint16_t weightFixupOffset;
+	uint16_t weightFixupCount;
+
+    // disables interp for certain frames (from what I can tell)
+    uint16_t noInterpFrameOffset;
+    uint16_t noInterpFrameCount;
+};
+
+struct mstudioevent_t
+{
+	float cycle;
+	int	event;
+	int type; // no flag if using 'event' var with event id
+
+	int unk;
+
+	// bad names, "optionsOffset" and "eventOffset"?
+	uint16_t optionsindex;
+	uint16_t szeventindex;
+};
+
+struct mstudioautolayer_t
+{
+	uint64_t iSequence; // hashed aseq guid asset, this needs to have a guid descriptor in rpak
+	int iPose;
+
+	int flags;
+	float start;	// beginning of influence
+	float peak;	// start of full influence
+	float tail;	// end of full influence
+	float end;	// end of all influence
+};
+
+struct mstudioactivitymodifier_t
+{
+	uint16_t sznameindex;
+
+	bool negate; // 0 or 1 observed.
+
+    char pad <hidden=true>;
+};
+
+struct mstudiocompressedikerror_t
+{
+	uint16_t sectionframes;
+	float scale[6];
+};
+
+// weight fixups, mostly for procbones, uses linearprocbones
+struct mstudioseqweightfixup_t
+{
+    // generally 0-1
+    float unk_0; // used to scale the result
+
+    int bone; // bone idx
+
+    // used to adjust cycle
+    float unk_8;
+    float unk_C;
+    float unk_10;
+    float unk_14;
+};
+
+struct mstudio_nointerpframes_t
+{
+    int firstFrame;
+    int lastFrame;
+};
+
+// 'index' member removed, as it was unused anywhere.
+struct mstudioikrule_t
+{
+	short chain;
+	short bone;
+	char type;
+	char slot;
+
+	mstudiocompressedikerror_t compressedikerror;
+	uint16_t compressedikerrorindex;
+
+	short iStart;
+	uint16_t ikerrorindex;
+
+	uint16_t szattachmentindex; // name of world attachment
+
+	float start; // beginning of influence
+	float peak; // start of full influence
+	float tail; // end of full influence
+	float end; // end of all influence
+
+	float contact; // frame footstep makes ground concact
+	float drop; // how far down the foot should drop when reaching for IK
+	float top; // top of the foot box
+
+	float height;
+	float endHeight;
+	float radius;
+	float floor;
+
+	// these are not used, but fit here perfectly so.
+	Vector pos;
+	Quaternion q;
+};
+
+struct mstudioframemovement_t
+{
+	float scale[4];
+	int sectionframes;
+};
+
+struct mstudioanimdesc_t
+{
+	float fps; // frames per second	
+	int flags; // looping/non-looping flags
+
+	int numframes;
+
+	uint16_t sznameindex;
+
+	uint16_t framemovementindex; // new in v52
+
+	int animindex; // non-zero when anim data isn't in sections
+
+	uint16_t numikrules;
+	uint16_t ikruleindex; // non-zero when IK data is stored in the mdl
+
+	int64_t sectionDataExternal;
+	uint16_t unk1;
+
+	uint16_t sectionindex;
+	uint16_t sectionstallframes; // number of stall frames inside the animation, the reset excluding the final frame are stored externally. when external data is not loaded(?)/found(?) it falls back on the last frame of this as a stall
+	uint16_t sectionframes; // number of frames used in each fast lookup section, zero if not used
+	// numsections = ((numframes - sectionstallframes - 1) / sectionframes) + 2;
+	// numsections after stall section, if stall frames > zero add one section
+};
+
+struct mstudioanimsections_t
+{
+	int animindex;
+};
+
+#define FEATURE_STALL
+#define FEATURE_NOINTERPFRAMES
+#define FEATURE_STATICSTRUCTS
+
+#endif

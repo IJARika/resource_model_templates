@@ -1,0 +1,234 @@
+//------------------------------------------------
+//--- 010 Editor v12.0.1 Binary Template
+//
+//      File: rseq_v10_h.bt
+//   Authors: Rika
+//   Version: 0.3
+//   Purpose: Respawn Sequence Files
+//  Category: Animation
+// File Mask: *.rseq
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+#ifndef RSEQ_10_H
+#define RSEQ_10_H
+
+struct mstudioseqdesc_t
+{
+	int baseptr;
+
+	int	szlabelindex;
+
+	int szactivitynameindex;
+
+	int flags; // looping/non-looping flags
+
+	int activity; // initialized at loadtime to game DLL values
+	int actweight;
+
+	int numevents;
+	int eventindex;
+
+	Vector bbmin; // per sequence bounding box
+	Vector bbmax;
+
+	int numblends;
+
+	// Index into array of ints which is groupsize[0] x groupsize[1] in length
+	int animindexindex;
+
+	int movementindex; // [blend] float array for blended movement
+	int groupsize[2];
+	int paramindex[2]; // X, Y, Z, XR, YR, ZR
+	float paramstart[2]; // local (0..1) starting value
+	float paramend[2]; // local (0..1) ending value
+	int paramparent;
+
+	float fadeintime; // ideal cross fate in time (0.2 default)
+	float fadeouttime; // ideal cross fade out time (0.2 default)
+
+	int localentrynode; // transition node at entry
+	int localexitnode; // transition node at exit
+	int nodeflags; // transition rules
+
+	float entryphase; // used to match entry gait
+	float exitphase; // used to match exit gait
+
+	float lastframe; // frame that should generation EndOfSequence
+
+	int nextseq; // auto advancing sequences
+	int pose; // index of delta animation between end and nextseq
+
+	int numikrules;
+
+	int numautolayers;
+	int autolayerindex;
+
+	int weightlistindex;
+
+	int posekeyindex;
+
+	int numiklocks;
+	int iklockindex;
+
+	// Key values
+	int keyvalueindex;
+	int keyvaluesize;
+
+	int cycleposeindex; // index of pose parameter to use as cycle index
+
+	int activitymodifierindex;
+	int numactivitymodifiers;
+
+	int ikResetMask;	// new in v52
+	// titan_buddy_mp_core.mdl
+	// reset all ikrules with this type???
+	int unk1;	// count?
+	// mayhaps this is the ik type applied to the mask if what's above it true
+
+	// for adjusting bone weights, mostly used for procbones (jiggle)
+	int weightFixupOffset;
+	int weightFixupCount;
+};
+
+struct mstudioevent_t
+{
+	float cycle;
+	int	event;
+	int type; // this will be 0 if old style I'd imagine
+
+	int unk; // 2, 4, animseq/weapons/crypto_heirloom/ptpov_sword_crypto/draw.rseq
+
+	char options[256];
+
+	int szeventindex;
+};
+
+struct mstudioautolayer_t
+{
+	uint64_t iSequence; // hashed aseq guid asset, this needs to have a guid descriptor in rpak
+	int iPose;
+
+	int flags;
+	float start;	// beginning of influence
+	float peak;	// start of full influence
+	float tail;	// end of full influence
+	float end;	// end of all influence
+};
+
+struct mstudioactivitymodifier_t
+{
+	int sznameindex;
+	bool negate; // negate all other activity modifiers when this one is active?
+
+    char pad[3] <hidden=true>;
+};
+
+struct mstudiocompressedikerror_t
+{
+	float scale[6]; // these values are the same as what posscale (if it was used) and rotscale are.
+	int sectionframes; // frames per section, may not match animdesc
+};
+
+// weight fixups, mostly for procbones, uses linearprocbones
+struct mstudioseqweightfixup_t
+{
+    // generally 0-1
+    float unk_0; // used to scale the result
+
+    int bone; // bone idx
+
+    // used to adjust cycle
+    float unk_8;
+    float unk_C;
+    float unk_10;
+    float unk_14;
+};
+
+// 'index' member removed, as it was unused anywhere.
+struct mstudioikrule_t
+{
+	int index;
+	int type;
+	int chain;
+	int bone; // gets it from ikchain now pretty sure
+
+	int slot; // iktarget slot. Usually same as chain.
+	float height;
+	float radius;
+	float floor;
+	Vector pos;
+	Quaternion q;
+
+	// apex does this oddly
+	mstudiocompressedikerror_t compressedikerror;
+	int compressedikerrorindex;
+
+	int iStart;
+	int ikerrorindex;
+
+	float start; // beginning of influence
+	float peak; // start of full influence
+	float tail; // end of full influence
+	float end; // end of all influence
+
+	float contact; // frame footstep makes ground concact
+	float drop; // how far down the foot should drop when reaching for IK
+	float top; // top of the foot box
+
+	int szattachmentindex; // name of world attachment
+
+	float endHeight; // new in v52   
+};
+
+struct mstudioframemovement_t
+{
+	float scale[4];
+	int sectionframes;
+};
+
+struct mstudioanimdesc_t
+{
+	int baseptr;
+
+	int sznameindex;
+
+	float fps; // frames per second	
+	int flags; // looping/non-looping flags
+
+	int numframes;
+
+	// piecewise movement
+	int nummovements;
+	int movementindex;
+
+	int framemovementindex; // new in v52
+
+	int animindex; // non-zero when anim data isn't in sections
+
+	int numikrules;
+	int ikruleindex; // non-zero when IK data is stored in the mdl
+
+	int sectionindex;
+	int sectionstallframes; // number of stall frames inside the animation, the reset excluding the final frame are stored externally. when external data is not loaded(?)/found(?) it falls back on the last frame of this as a stall
+	int sectionframes; // number of frames used in each fast lookup section, zero if not used
+    // numsections = ((numframes - sectionstallframes - 1) / sectionframes) + 2;
+	// numsections after stall section, if stall frames > zero add one section
+
+	int64_t unk1;
+	int64_t sectionDataExternal;
+};
+
+struct mstudioanimsections_t
+{
+	int animindex;
+    bool isExternal; // 0 or 1, if 1 section is not in local data
+
+    char pad[3] <hidden=true>;
+};
+
+#define USE_BIG_NUMBERS
+#define FEATURE_STALL
+
+#endif

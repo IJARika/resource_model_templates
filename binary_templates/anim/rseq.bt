@@ -3,7 +3,7 @@
 //
 //      File: rseq.bt
 //   Authors: Rika
-//   Version: 0.2
+//   Version: 0.3
 //   Purpose: Respawn Sequence Files
 //  Category: Animation
 // File Mask: *.rseq
@@ -12,7 +12,8 @@
 //------------------------------------------------
 
 local bool canParseAnim = true;
-
+local int boneCount = 0;
+local int animCount = 0;
 #include "../model/studio_r5_h.bt"
 
 #ifdef USE_BIG_NUMBERS
@@ -27,19 +28,7 @@ int GetOffset(unsigned short offset)
 }
 #endif
 
-mstudioseqdesc_t seqdesc <fgcolor=0xf0b27a, read=Str("label: %s; activity: %s;", ReadString(startof(this) + this.szlabelindex), ReadString(startof(this) + this.szactivitynameindex))>;
-
-// hacky but there really is no better way to get this without the rrig or rmdl
-local int boneCount = (GetOffset(seqdesc.activitymodifierindex) - GetOffset(seqdesc.weightlistindex)) / 4;
-local int animCount = (seqdesc.groupsize[0] * seqdesc.groupsize[1]);
-
 #ifdef FEATURE_STATICSTRUCTS
-if (seqdesc.weightlistindex == 1 || seqdesc.weightlistindex == 3)
-{
-    boneCount = 0;
-    canParseAnim = false;
-}
-
 // HACK HACK
 // this works because the first bone normally has fixed position or rotation making the size > 0x8
 // and if an animation has a track it will also be larger than 0x8
@@ -63,49 +52,6 @@ void BoneCountCheat(const int64_t baseptr)
         boneCount = (tmpIdx / 2) * 2;
     }
 }
-#endif
-
-// pose keys
-if(seqdesc.posekeyindex)
-{
-    FSeek(startof(seqdesc) + GetOffset(seqdesc.posekeyindex));
-    float posekey[seqdesc.groupsize[0] + seqdesc.groupsize[1]] <fgcolor=0x55ee00>;
-}
-
-// events
-if(seqdesc.numevents)
-{
-    FSeek(startof(seqdesc) + GetOffset(seqdesc.eventindex));
-    mstudioevent_t seqevent[seqdesc.numevents] <fgcolor=0x21fe7a, read=ReadString(startof(this) + this.szeventindex)>;
-}
-
-// auto layers
-if(seqdesc.numautolayers)
-{
-    FSeek(startof(seqdesc) + GetOffset(seqdesc.autolayerindex));
-    mstudioautolayer_t autolayers[seqdesc.numautolayers] <fgcolor=0x226600>;
-}
-
-// bone weights
-if (boneCount && canParseAnim)
-{
-    FSeek(startof(seqdesc) + GetOffset(seqdesc.weightlistindex));
-    float weightlist[boneCount] <fgcolor=0xe1f27a>;
-}
-
-// act mods
-if (seqdesc.numactivitymodifiers)
-{
-    FSeek(startof(seqdesc) + GetOffset(seqdesc.activitymodifierindex));
-    mstudioactivitymodifier_t activitymodifier[seqdesc.numactivitymodifiers] <fgcolor=0x119900, read=ReadString(startof(this) + this.sznameindex)>;
-};
-
-// animdesc offsets
-FSeek(startof(seqdesc) + GetOffset(seqdesc.animindexindex));
-#ifdef USE_BIG_NUMBERS
-int blends[seqdesc.groupsize[0] * seqdesc.groupsize[1]] <fgcolor=0xffff00>;
-#else
-short blends[seqdesc.groupsize[0] * seqdesc.groupsize[1]] <fgcolor=0xffff00>;
 #endif
 
 uint16_t ParseRLEAnimationOffset(const int count)
@@ -426,10 +372,15 @@ int GetMaxFrameForSection(const int numframes, const int sectionframes, const in
     return sectionframes;
 }
 
-int GetMaxFrameForSectionStall(const int stallframes, const int sectionframes, const int section, const int numSections)
+int GetMaxFrameForSectionStall(const int numframes, const int stallframes, const int sectionframes, const int section, const int numSections)
 {
     if (section == (numSections - 1))
         return 1;
+
+    // the last full section will have less than sectionframes number of frames in most cases, doesn't seem to hurt stall style anims.
+    // subtract one section for stall section    
+    if (section == (numSections - 2))
+        return numframes - stallframes - ((section - 1) * sectionframes) - 1;
 
     if (stallframes > 0 && section == 0)
         return stallframes;
@@ -476,7 +427,7 @@ void ParseAnimdesc(const uint64_t baseptr, const int animindex)
 #endif
 
 #ifdef FEATURE_STALL
-                maxFrames = GetMaxFrameForSectionStall(animdesc.sectionstallframes, animdesc.sectionframes, j, sectionCount);
+                maxFrames = GetMaxFrameForSectionStall(animdesc.numframes, animdesc.sectionstallframes, animdesc.sectionframes, j, sectionCount);
 #else
                 maxFrames = GetMaxFrameForSection(animdesc.numframes, animdesc.sectionframes, j, sectionCount);
 #endif
@@ -510,27 +461,91 @@ void ParseAnimdesc(const uint64_t baseptr, const int animindex)
     } anim <read=ReadString(startof(this.animdesc) + this.animdesc.sznameindex)>;
 }
 
-for(i = 0; i < animCount; i++)
+void ParseSeqdesc()
 {
-    ParseAnimdesc(startof(seqdesc), blends[i]);
-}
-
-if(seqdesc.weightFixupCount)
-{
-    FSeek(startof(seqdesc) + seqdesc.weightFixupOffset);
-    mstudioseqweightfixup_t weightfixup[seqdesc.weightFixupCount] <fgcolor=0x9900BB>;
-}
-
-#ifdef FEATURE_NOINTERPFRAMES
-if (seqdesc.noInterpFrameCount)
-{
-    local const int dataSize = GetOffset(seqdesc.szlabelindex) - GetOffset(seqdesc.noInterpFrameOffset);
-    local const bool usePairs = seqdesc.noInterpFrameCount * sizeof(mstudio_nointerpframes_t) == dataSize;
-
-    FSeek(startof(seqdesc) + GetOffset(seqdesc.noInterpFrameOffset));
-    if (usePairs)
-        mstudio_nointerpframes_t nointerpframes[seqdesc.noInterpFrameCount]  <fgcolor=0x60e060>;
-    else
-        int nointerpframes[seqdesc.noInterpFrameCount] <fgcolor=0x60e060>;
-}
+    mstudioseqdesc_t seqdesc <fgcolor=0xf0b27a, read=Str("label: %s; activity: %s;", ReadString(startof(this) + this.szlabelindex), ReadString(startof(this) + this.szactivitynameindex))>;
+    
+    // hacky but there really is no better way to get this without the rrig or rmdl
+#ifndef RIG_PRESENT
+    boneCount = (GetOffset(seqdesc.activitymodifierindex) - GetOffset(seqdesc.weightlistindex)) / 4;
 #endif
+    animCount = (seqdesc.groupsize[0] * seqdesc.groupsize[1]);
+
+#ifndef RIG_PRESENT
+#ifdef FEATURE_STATICSTRUCTS
+    if (seqdesc.weightlistindex == 1 || seqdesc.weightlistindex == 3)
+    {
+        boneCount = 0;
+        canParseAnim = false;
+    }
+#endif
+#endif
+
+    // pose keys
+    if(seqdesc.posekeyindex)
+    {
+        FSeek(startof(seqdesc) + GetOffset(seqdesc.posekeyindex));
+        float posekey[seqdesc.groupsize[0] + seqdesc.groupsize[1]] <fgcolor=0x55ee00>;
+    }
+    
+    // events
+    if(seqdesc.numevents)
+    {
+        FSeek(startof(seqdesc) + GetOffset(seqdesc.eventindex));
+        mstudioevent_t seqevent[seqdesc.numevents] <fgcolor=0x21fe7a, read=ReadString(startof(this) + this.szeventindex)>;
+    }
+    
+    // auto layers
+    if(seqdesc.numautolayers)
+    {
+        FSeek(startof(seqdesc) + GetOffset(seqdesc.autolayerindex));
+        mstudioautolayer_t autolayers[seqdesc.numautolayers] <fgcolor=0x226600>;
+    }
+    
+    // bone weights
+    if (boneCount && canParseAnim)
+    {
+        FSeek(startof(seqdesc) + GetOffset(seqdesc.weightlistindex));
+        float weightlist[boneCount] <fgcolor=0xe1f27a>;
+    }
+    
+    // act mods
+    if (seqdesc.numactivitymodifiers)
+    {
+        FSeek(startof(seqdesc) + GetOffset(seqdesc.activitymodifierindex));
+        mstudioactivitymodifier_t activitymodifier[seqdesc.numactivitymodifiers] <fgcolor=0x119900, read=ReadString(startof(this) + this.sznameindex)>;
+    };
+    
+    // animdesc offsets
+    FSeek(startof(seqdesc) + GetOffset(seqdesc.animindexindex));
+    #ifdef USE_BIG_NUMBERS
+    int blends[seqdesc.groupsize[0] * seqdesc.groupsize[1]] <fgcolor=0xffff00>;
+    #else
+    short blends[seqdesc.groupsize[0] * seqdesc.groupsize[1]] <fgcolor=0xffff00>;
+    #endif
+
+    for(i = 0; i < animCount; i++)
+    {
+        ParseAnimdesc(startof(seqdesc), blends[i]);
+    }
+    
+    if(seqdesc.weightFixupCount)
+    {
+        FSeek(startof(seqdesc) + seqdesc.weightFixupOffset);
+        mstudioseqweightfixup_t weightfixup[seqdesc.weightFixupCount] <fgcolor=0x9900BB>;
+    }
+    
+    #ifdef FEATURE_NOINTERPFRAMES
+    if (seqdesc.noInterpFrameCount)
+    {
+        local const int dataSize = GetOffset(seqdesc.szlabelindex) - GetOffset(seqdesc.noInterpFrameOffset);
+        local const bool usePairs = seqdesc.noInterpFrameCount * sizeof(mstudio_nointerpframes_t) == dataSize;
+    
+        FSeek(startof(seqdesc) + GetOffset(seqdesc.noInterpFrameOffset));
+        if (usePairs)
+            mstudio_nointerpframes_t nointerpframes[seqdesc.noInterpFrameCount]  <fgcolor=0x60e060>;
+        else
+            int nointerpframes[seqdesc.noInterpFrameCount] <fgcolor=0x60e060>;
+    }
+    #endif
+};
