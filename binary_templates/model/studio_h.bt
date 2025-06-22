@@ -22,6 +22,52 @@
 // bones
 //
 
+#define BONE_HAS_SAVEFRAME_POS		0x00200000	// Vector48
+#define BONE_HAS_SAVEFRAME_ROT64	0x00400000	// Quaternion64 (v48 -> v49 : BONE_HAS_SAVEFRAME_ROT -> BONE_HAS_SAVEFRAME_ROT64)
+#define BONE_HAS_SAVEFRAME_ROT32	0x00800000	// Quaternion32
+#define BONE_HAS_SAVEFRAME (BONE_HAS_SAVEFRAME_POS | BONE_HAS_SAVEFRAME_ROT64 | BONE_HAS_SAVEFRAME_ROT32)
+
+#define STUDIO_PROC_AXISINTERP	1
+#define STUDIO_PROC_QUATINTERP	2
+#define STUDIO_PROC_AIMATBONE	3
+#define STUDIO_PROC_AIMATATTACH 4
+#define STUDIO_PROC_JIGGLE		5
+#define STUDIO_PROC_TWIST_MASTER    6
+#define STUDIO_PROC_TWIST_SLAVE     7	// Multiple twist bones are computed at once for the same parent/child combo so TWIST_NULL do nothing
+
+#ifndef STUDIO_R5_H
+struct mstudioaxisinterpbone_t
+{
+	int				control;// local transformation of this bone used to calc 3 point blend
+	int				axis;	// axis to check
+	Vector			pos[6];	// X+, X-, Y+, Y-, Z+, Z-
+	Quaternion		quat[6];// X+, X-, Y+, Y-, Z+, Z-
+};
+
+struct mstudioquatinterpinfo_t
+{
+	float			inv_tolerance;	// 1 / radian angle of trigger influence
+	Quaternion		trigger;	// angle to match
+	Vector			pos;		// new position
+	Quaternion		quat;		// new angle
+};
+
+struct mstudioquatinterpbone_t
+{
+	int				control;// local transformation to check
+	int				numtriggers;
+	int				triggerindex;
+};
+
+struct mstudioaimatbone_t
+{
+	int				parent;
+	int				aim;		// Might be bone or attach
+	Vector			aimvector;
+	Vector			upvector;
+	Vector			basepos;
+};
+
 // this struct is the same in r1 and r2, and unchanged from p2
 struct mstudiojigglebone_t
 {
@@ -93,6 +139,7 @@ struct mstudiolinearbone_t
 
 	int unused[6];
 };
+#endif
 
 // this struct is the same in r1 and r2, and unchanged from p2
 struct mstudiosrcbonetransform_t
@@ -102,6 +149,7 @@ struct mstudiosrcbonetransform_t
 	matrix3x4_t	posttransform;
 };
 
+#ifndef STUDIO_R5_H
 struct mstudioattachment_t
 {
 	int sznameindex;
@@ -110,7 +158,9 @@ struct mstudioattachment_t
 	matrix3x4_t local0; // attachment point
 	int unused[8];
 };
+#endif
 
+#ifndef STUDIO_R5_16_H
 // this struct is the same in r1 and r2, and unchanged from p2
 struct mstudiohitboxset_t
 {
@@ -118,15 +168,46 @@ struct mstudiohitboxset_t
 	int numhitboxes;
 	int hitboxindex;
 };
+#endif
+
 
 //
 // animations
 //
+
+#ifndef STUDIO_R5_H
+#define STUDIO_FRAMEANIM        0x40		// animation is encoded as by frame x bone instead of RLE bone x frame
+#define STUDIO_FRAMEMOVEMENT    0x40000 // framemovements are only read if this flag is present
+#define STUDIO_BPANIM			0x100000 // animation uses bluepoint's custom animation data
+
+union mstudioanimvalue_t
+{
+	struct
+	{
+		uint8_t valid;
+		uint8_t total;
+	} num;
+	short value;
+};
+
+struct mstudioanim_valueptr_t
+{
+	short offset[3];
+};
+
+struct rle_value
+{
+    mstudioanimvalue_t value;
+
+    short values[value.num.valid];
+};
+
 struct mstudioanimblock_t
 {
 	int datastart;
 	int dataend;
 };
+#endif
 
 struct mstudiomovement_t
 {
@@ -139,6 +220,7 @@ struct mstudiomovement_t
 	Vector position;	// relative to start of animation???
 };
 
+#ifndef STUDIO_R5_H
 struct mstudioframemovement_t
 {
 	float scale[4];
@@ -179,6 +261,7 @@ struct mstudioautolayer_t
 	float tail;	// end of full influence
 	float end;	// end of all influence
 };
+#endif
 
 struct mstudiomodelgroup_t
 {
@@ -187,9 +270,41 @@ struct mstudiomodelgroup_t
 	int sznameindex;	// file name
 };
 
+struct mstudioiklock_t
+{
+	int chain;
+	float flPosWeight;
+	float flLocalQWeight;
+	int flags;
+
+	int unused[4];
+};
+
+#ifndef STUDIO_R5_H
+struct mstudioikrulezeroframe_t
+{
+	short chain;
+	short slot;
+	hfloat start;	// beginning of influence
+	hfloat peak;	// start of full influence
+	hfloat tail;	// end of full influence
+	hfloat end;     // end of all influence
+};
+#endif
+
+
 //
 // meshes
 //
+
+struct mstudio_meshvertexdata_t
+{
+	// indirection to this mesh's model's vertex data
+    int modelvertexdata; // const mstudio_modelvertexdata_t* (32bit ptr)
+
+	int numLODVertexes[MAX_NUM_LODS];
+};
+
 struct mstudio_meshvertexloddata_t
 {
 	int modelvertexdataUnusedPad; // likely has none of the funny stuff because unused
@@ -197,6 +312,13 @@ struct mstudio_meshvertexloddata_t
 	int numLODVertexes[MAX_NUM_LODS]; // depreciated starting with rmdl v14(?)
 };
 
+struct mstudio_modelvertexdata_t
+{
+    int pVertexData; // 32bit const void ptr (const void*)
+    int pTangentData; // 32bit const void ptr (const void*)
+};
+
+#ifndef STUDIO_R5_16_H
 struct mstudiobodyparts_t
 {
 	int sznameindex;
@@ -215,10 +337,13 @@ struct mstudioposeparamdesc_t
 	float end;	// ending value
 	float loop;	// looping range, 0 for no looping, 360 for rotations, etc.
 };
+#endif
 
 //
 // collision
 //
+
+#ifndef STUDIO_R5_H
 struct mstudiopertrivertex_t
 {
 	// to get float value:
@@ -264,5 +389,118 @@ struct mstudiopertrihdr_t
 
 	int unused[8];
 };
+#endif
+
+//
+// flexes
+//
+
+#ifndef STUDIO_R5_H
+struct mstudioflexdesc_t
+{
+	int szFACSindex;
+};
+
+struct mstudioflexcontroller_t
+{
+	int sztypeindex;
+	int sznameindex;
+	int localToGlobal;	// remapped at load time to master list
+	float min;
+	float max;
+};
+
+struct mstudioflexrule_t
+{
+	int flex;
+	int numops;
+	int opindex;
+};
+
+struct mstudioflexop_t
+{
+	int op;
+	union 
+	{
+		int index;
+		float value;
+	} d;
+};
+
+struct mstudioflexcontrollerui_t
+{
+	int sznameindex;
+
+	// These are used like a union to save space
+	// Here are the possible configurations for a UI controller
+	//
+	// SIMPLE NON-STEREO:	0: control	1: unused	2: unused
+	// STEREO:				0: left		1: right	2: unused
+	// NWAY NON-STEREO:		0: control	1: unused	2: value
+	// NWAY STEREO:			0: left		1: right	2: value
+
+	int szindex0;
+	int szindex1;
+	int szindex2;
+
+	unsigned char remaptype;	// See the FlexControllerRemapType_t enum
+	bool stereo;		// Is this a stereo control?
+	byte unused[2];
+};
+
+struct mstudioflex_t
+{
+	int					flexdesc;	// input value
+
+	float				target0;	// zero
+	float				target1;	// one
+	float				target2;	// one
+	float				target3;	// zero
+
+	int					numverts;
+	int					vertindex;
+
+	int					flexpair;	// second flex desc
+	unsigned char		vertanimtype;	// See StudioVertAnimType_t
+	unsigned char		unusedchar[3];
+	int					unused[6];
+
+};
+
+struct mstudiomouth_t
+{
+	int					bone;
+	Vector				forward;
+	int					flexdesc;
+};
+
+struct mstudioeyeball_t
+{
+	int     sznameindex;
+	int		bone;
+	Vector	org;
+	float	zoffset;
+	float	radius;
+	Vector	up;
+	Vector	forward;
+	int		texture;
+
+	int		unused1;
+	float	iris_scale;
+	int		unused2;
+
+	int		upperflexdesc[3];	// index of raiser, neutral, and lowerer flexdesc that is set by flex controllers
+	int		lowerflexdesc[3];
+	float	uppertarget[3];		// angle (radians) of raised, neutral, and lowered lid positions
+	float	lowertarget[3];
+
+	int		upperlidflexdesc;	// index of flex desc that actual lid flexes look to
+	int		lowerlidflexdesc;
+	int		unused[4];			// These were used before, so not guaranteed to be 0
+	bool	m_bNonFACS;			// Never used before version 44
+	char	unused3[3];
+	int		unused4[7];
+};
+#endif
 
 #endif

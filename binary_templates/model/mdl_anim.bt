@@ -11,33 +11,7 @@
 //   History: 
 //------------------------------------------------
 
-#define STUDIO_FRAMEANIM        0x40		// animation is encoded as by frame x bone instead of RLE bone x frame
-#define STUDIO_FRAMEMOVEMENT    0x40000 // framemovements are only read if this flag is present
-#define STUDIO_BPANIM			0x100000 // animation uses bluepoint's custom animation data
-
 // animation
-union mstudioanimvalue_t
-{
-	struct
-	{
-		uint8_t valid;
-		uint8_t total;
-	} num;
-	short value;
-};
-
-struct mstudioanim_valueptr_t
-{
-	short offset[3];
-};
-
-struct rle_value
-{
-    mstudioanimvalue_t value;
-
-    short values[value.num.valid];
-};
-
 struct rle_valuetrack(int frameCount)
 {
     rle_value value;
@@ -221,7 +195,11 @@ struct frame_bone(const uint8_t boneFlags, const int boneIdx, const bool isConst
      
     if(((boneFlags & STUDIO_FRAME_RAWPOS) && isConstData) || ((boneFlags & STUDIO_FRAME_ANIMPOS) && !isConstData))
     {
+#ifdef STUDIO_FRAME_FULLANIM   
         if (boneFlags & STUDIO_FRAME_FULLANIM)
+#else
+        if (boneFlags & STUDIO_FRAME_FULLANIMPOS && !isConstData)
+#endif
             Vector pos;
         else
             Vector48 pos;
@@ -231,6 +209,7 @@ struct frame_bone(const uint8_t boneFlags, const int boneIdx, const bool isConst
 #ifdef STUDIO_FRAME_ANIMSCALE
     if(((boneFlags & STUDIO_FRAME_RAWSCALE) && isConstData) || ((boneFlags & STUDIO_FRAME_ANIMSCALE) && !isConstData))
     {
+        // this is only used in r1 so we don't have to do a funky check here ;3
         if (boneFlags & STUDIO_FRAME_FULLANIM)
             Vector pos;
         else
@@ -240,6 +219,44 @@ struct frame_bone(const uint8_t boneFlags, const int boneIdx, const bool isConst
 #endif
 };
 
+void SkipBoneFrame(uint8_t flags, int& pConstData, int& pFrameData)
+{
+#ifdef USE_FRAMEANIM_R1
+	uint8_t boneFlagsConst = flags & 7; // mask to constant data flags
+
+	flags >>= 3; // shift to access per frame flags.
+
+	uint8_t boneFlagsFrame = flags & 7; // mask to per frame data flags
+	uint8_t fullAnim = flags & 8; // use this as a base offset into the lut, everything starting at idx 8 is for full sized vectors.
+
+	pConstData += s_FrameAnimBoneSizeLUT[fullAnim | boneFlagsConst];
+	pFrameData += s_FrameAnimBoneSizeLUT[fullAnim | boneFlagsFrame];
+#else
+    if (flags & STUDIO_FRAME_ANIMROT)
+	{
+		pFrameData += sizeof(Quaternion48);
+	}
+    else if (flags & STUDIO_FRAME_RAWROT)
+	{
+		pConstData += sizeof(Quaternion48);
+	}
+
+	if (flags & STUDIO_FRAME_ANIMPOS)
+	{
+		pFrameData += sizeof(Vector48);
+	}
+	else if (flags & STUDIO_FRAME_FULLANIMPOS)
+	{
+		pFrameData += sizeof(Vector);
+	}
+	else if (flags & STUDIO_FRAME_RAWPOS)
+	{
+		pConstData += sizeof(Vector48);
+	}
+
+#endif
+}
+
 struct frame_anim(const uint64_t baseptr, const int animindex, const int frameCount)
 {
     FSeek(baseptr + animindex);
@@ -247,20 +264,25 @@ struct frame_anim(const uint64_t baseptr, const int animindex, const int frameCo
                         
     uint8_t boneFlags[boneCount] <fgcolor=0xaa8822>;
 
+#ifdef USE_FRAMEANIM_R1
     if (exists(frameanim.boneLookupTableOffset) && frameanim.boneLookupTableOffset)
     {
         FSeek(startof(frameanim) + frameanim.boneLookupTableOffset);
         mstudio_frame_anim_boneoffset_t lookupTable[boneCount] <fgcolor=0xaa8866>;
     }
+#endif
     
+    local int constOffset = 0;
+    local int frameOffset = 0;
+
     if (frameanim.constantsoffset != frameanim.frameoffset)
     {
         const local int64_t constBaseptr = startof(frameanim) + frameanim.constantsoffset;
         FSeek(constBaseptr);
         struct {
             local int boneIdx;
-            local int boneOffset;
             local uint8_t boneFlag;
+            local int boneOffset = 0;
             for (boneIdx = 0; boneIdx < boneCount; boneIdx++)
             {
                 boneFlag = boneFlags[boneIdx];
@@ -268,10 +290,16 @@ struct frame_anim(const uint64_t baseptr, const int animindex, const int frameCo
                 if (!(boneFlag & STUDIO_FRAME_CONSTDATA))
                     continue;                
 
+#ifdef USE_FRAMEANIM_R1
                 if (exists(lookupTable))
                     boneOffset = lookupTable[boneIdx].constOffset;
-                else // todo: normal source + r1 lookup function
-                    boneOffset = 0;
+                else
+#else
+                {
+                    boneOffset = constOffset;
+                    SkipBoneFrame(boneFlag, constOffset, frameOffset);
+                }
+#endif
 
                 FSeek(constBaseptr + boneOffset);
                 frame_bone bone(boneFlag, boneIdx, true) <read=ReadString(startof(bones[this.bone]) + bones[this.bone].sznameindex), fgcolor=0x321431>;
@@ -303,10 +331,16 @@ struct frame_anim(const uint64_t baseptr, const int animindex, const int frameCo
                         if (!(boneFlag & STUDIO_FRAME_FRAMEDATA))
                             continue;                
                     
+#ifdef USE_FRAMEANIM_R1
                         if (exists(lookupTable))
-                            boneOffset = lookupTable[boneIdx].frameOffset;
-                        else // todo: normal source + r1 lookup function
-                            boneOffset = 0;
+                            boneOffset = lookupTable[boneIdx].constOffset;
+                        else
+#else
+                        {
+                            boneOffset = constOffset;
+                            SkipBoneFrame(boneFlag, constOffset, frameOffset);
+                        }
+#endif
                     
                         FSeek(frameBaseptrFrame + boneOffset);
                         frame_bone bone(boneFlag, boneIdx, false) <read=ReadString(startof(bones[this.bone]) + bones[this.bone].sznameindex), fgcolor=0x844b78>;
@@ -431,6 +465,34 @@ int GetMaxFrameForSection_Frame(const int numframes, const int sectionframes, co
     return sectionframes + 1; // always an extra frame!
 }
 
+#ifdef FEATURE_ZEROFRAME
+struct ZeroFrameBone_t(const int boneIdx)
+{
+    local int boneId = boneIdx;
+
+    if(bones[boneIdx].flags & BONE_HAS_SAVEFRAME_POS)
+        Vector48 pos;
+
+    if(bones[boneIdx].flags & BONE_HAS_SAVEFRAME_ROT64)
+        Quaternion64 rot;
+
+    if(bones[boneIdx].flags & BONE_HAS_SAVEFRAME_ROT32)
+        Quaternion32 rot;
+};
+
+struct ZeroFrame_t
+{
+    local int boneIdx;
+    for (boneIdx = 0; boneIdx < hdr.numbones; boneIdx++)
+    {
+        if (bones[boneIdx].flags & BONE_HAS_SAVEFRAME)
+        {
+             ZeroFrameBone_t transforms(boneIdx) <read=ReadString(startof(bones[boneId]) + bones[boneId].sznameindex), fgcolor=0xffaa88>;
+        }
+    }
+};
+#endif
+
 enum AnimType_t
 {
     ANIM_RLE = 0,
@@ -440,7 +502,7 @@ enum AnimType_t
 
 const AnimType_t GetAnimType(const int flags)
 {
-#ifdef FEATURE_FRAMANIM
+#ifdef FEATURE_FRAMEANIM
     if (flags & STUDIO_FRAMEANIM)
         return ANIM_FRAME;
 #endif
@@ -506,8 +568,12 @@ void ParseAnimdesc(const uint64_t baseptr, const int animindex)
                 }
             };
         }
-    
+
+#ifdef FEATURE_ANIMBLOCK
+        if (animdesc.sectionframes == 0 && !animdesc.animblock)
+#else
         if (animdesc.sectionframes == 0)
+#endif
         {
             FSeek(startof(animdesc) + animdesc.animindex);
             switch (type)
@@ -535,7 +601,11 @@ void ParseAnimdesc(const uint64_t baseptr, const int animindex)
             
         }
 
+#ifdef FEATURE_ANIMBLOCK
+        if(animdesc.numikrules && !animdesc.animblockikruleindex)
+#else
         if(animdesc.numikrules)
+#endif
         {
             for(j = 0; j < animdesc.numikrules; j++)
             {
@@ -549,6 +619,33 @@ void ParseAnimdesc(const uint64_t baseptr, const int animindex)
             FSeek(startof(animdesc) + animdesc.framemovementindex);
             anim_movement movement(animdesc.numframes - 1);
         }
+
+        if(animdesc.nummovements)
+        {
+            FSeek(startof(animdesc) + animdesc.movementindex);
+            mstudiomovement_t movement[animdesc.nummovements] <fgcolor=0xaa7722>;
+        }
+
+#ifdef FEATURE_ZEROFRAME
+        if(animdesc.zeroframeindex)
+        {
+            FSeek(startof(animdesc) + animdesc.zeroframeindex);
+    
+            struct {
+                local int zeroFrameIdx;
+                for(zeroFrameIdx = 0; zeroFrameIdx < animdesc.zeroframecount; zeroFrameIdx++)
+                {
+                    ZeroFrame_t frame;
+                }
+    
+                if(animdesc.numikrules && exists(animdesc.ikrulezeroframeindex))
+                {
+                    FSeek(startof(animdesc) + animdesc.ikrulezeroframeindex);
+                    mstudioikrulezeroframe_t zeroframeikrule[animdesc.numikrules] <fgcolor=cGreen>;
+                }
+            } zeroframe;
+        }
+#endif
 
     } anim <read=ReadString(startof(this.animdesc) + this.animdesc.sznameindex)>;
 }
@@ -595,7 +692,16 @@ void ParseSeqdesc(const uint64_t baseptr, const int seqindex)
             mstudioactivitymodifier_t activitymodifier[seqdesc.numactivitymodifiers] <fgcolor=0x119900, read=ReadString(startof(this) + this.sznameindex)>;
         };
 
-        FSeek(startof(seqdesc) + seqdesc.animindexindex);
-        uint16_t blends[animCount] <fgcolor=0xffff00, read=ReadString(startof(anims.anim[this].animdesc) + anims.anim[this].animdesc.sznameindex)>;
+        if (seqdesc.numiklocks)
+        {
+            FSeek(startof(seqdesc) + seqdesc.iklockindex);
+            mstudioiklock_t iklock[seqdesc.numiklocks] <fgcolor=0x88CC22>;
+        }
+
+        if (animCount)
+        {
+            FSeek(startof(seqdesc) + seqdesc.animindexindex);
+            uint16_t blends[animCount] <fgcolor=0xffff00, read=ReadString(startof(anims.anim[this].animdesc) + anims.anim[this].animdesc.sznameindex)>;
+        }
     } seq <read=ReadString(startof(this.seqdesc) + this.seqdesc.szlabelindex)>;
 }

@@ -60,7 +60,33 @@ if (hasProcBones)
                 // todo: other proctypes (but I have literally never seen them used)
                 switch (bones[i].proctype)
                 {
-                case 5:
+                case STUDIO_PROC_AXISINTERP:
+                {
+                    local int boneid = i;
+                    mstudioaxisinterpbone_t axisinterpbone <fgcolor=cGreen>;
+
+                    break;
+                }  
+                case STUDIO_PROC_QUATINTERP:
+                {
+                    local int boneid = i;
+                    mstudioquatinterpbone_t quatinterpbone <fgcolor=cGreen>;
+
+                    if (quatinterpbone.numtriggers)
+                    {
+                        FSeek(startof(quatinterpbone) + quatinterpbone.triggerindex);
+                        mstudioquatinterpinfo_t quatinterpinfo[quatinterpbone.numtriggers] <fgcolor=0x44DD66>;
+                    }
+                    break;
+                }
+                case STUDIO_PROC_AIMATATTACH:
+                {
+                    local int boneid = i;
+                    mstudioaimatbone_t aimatattachbone <fgcolor=cGreen>;
+
+                    break;
+                }
+                case STUDIO_PROC_JIGGLE:
                 {
                     local int boneid = i;
                     mstudiojigglebone_t jigglebone <fgcolor=cGreen>;
@@ -126,7 +152,7 @@ if (hdr.numlocalanim)
         local int animIdx;
         for (animIdx = 0; animIdx < hdr.numlocalanim; animIdx++)
             ParseAnimdesc(startof(hdr), hdr.localanimindex + (sizeof(mstudioanimdesc_t) * animIdx));
-    } anims;
+    } anims <read=Str("%i animations", hdr.numlocalanim)>;
 }
 
 if (hdr.numlocalseq)
@@ -136,7 +162,7 @@ if (hdr.numlocalseq)
         local int seqIdx;
         for (seqIdx = 0; seqIdx < hdr.numlocalseq; seqIdx++)
             ParseSeqdesc(startof(hdr), hdr.localseqindex + (sizeof(mstudioseqdesc_t) * seqIdx));
-    } seqs;
+    } seqs <read=Str("%i sequences", hdr.numlocalseq)>;
 }
 
 // todo: research how these work
@@ -162,7 +188,7 @@ if(hdr.numlocalnodes > 0)
             FSeek(startof(hdr) + hdr.localnodenameindex + (sizeof(int) * localNodeIdx));
             localnode_t nodes(hdr.localnodeindex + (hdr.numlocalnodes * localNodeIdx)) <read=this.name>;
         }
-    } localnodedata;
+    } localnodedata <read=Str("%i nodes", hdr.numlocalnodes)>;
 }
 
 // mesh
@@ -174,7 +200,18 @@ struct model_t
     {
         FSeek(startof(model) + model.meshindex);
         mstudiomesh_t meshes[model.nummeshes] <bgcolor=cLtGray, read=ReadString(startof(textures[this.material]) + textures[this.material].sznameindex)>;
+
+        // todo: flexes
+        // bleeeeh
     }
+
+#ifdef FEATURE_EYEBALLS
+    if (model.numeyeballs)
+    {
+        FSeek(startof(model) + model.eyeballindex);
+        mstudioeyeball_t eyeballs[model.numeyeballs] <fgcolor=0xccddcc>;
+    }
+#endif
 };
 
 struct bodypart_t
@@ -201,7 +238,49 @@ if(hdr.numbodyparts)
     } bodyparts <read=Str("%i bodyparts", hdr.numbodyparts)>;
 };
 
-// flexes if i do v49
+// flexes
+#ifdef FEATURE_FLEXES
+if(hdr.numflexdesc)
+{
+    FSeek(startof(hdr) + hdr.flexdescindex);
+    mstudioflexdesc_t flexdesc[hdr.numflexdesc] <fgcolor=0x55aaff, read=ReadString(startof(this) + this.szFACSindex)>;
+}
+
+if(hdr.numflexcontrollers)
+{
+    FSeek(startof(hdr) + hdr.flexcontrollerindex);
+    mstudioflexcontroller_t flexcontroller[hdr.numflexcontrollers] <fgcolor=0x00aaff, read=ReadString(startof(this) + this.sznameindex)>;
+}
+
+struct FlexRule_t
+{
+    mstudioflexrule_t flexrule <fgcolor=0x00ccdd>;
+
+    if (flexrule.numops)
+    {
+        FSeek(startof(flexrule) + flexrule.opindex);
+        mstudioflexop_t flexop[flexrule.numops] <fgcolor=0x88aadd>;
+    }
+};
+
+if(hdr.numflexrules)
+{
+    FSeek(startof(hdr) +  hdr.flexruleindex);
+    struct {
+        for (i = 0; i < hdr.numflexrules; i++)
+        {
+            FSeek(startof(hdr) +  hdr.flexruleindex + (sizeof(mstudioflexrule_t) * i));
+            FlexRule_t flexrule <read=ReadString(startof(flexdesc[this.flexrule.flex]) + flexdesc[this.flexrule.flex].szFACSindex)>;
+        }
+    } flexrules <read=Str("%i flexrules", hdr.numflexrules)>;
+}
+
+if(hdr.numflexcontrollerui)
+{
+    FSeek(startof(hdr) + hdr.flexcontrolleruiindex);
+    mstudioflexcontrollerui_t flexcontrollerui[hdr.numflexcontrollerui] <fgcolor=0x7799ff, read=ReadString(startof(this) + this.sznameindex)>;
+}
+#endif
 
 // animation 2
 struct ikchain_t
@@ -226,6 +305,19 @@ if(hdr.numikchains)
 }
 
 // iklock ??? check if used in r1/r2
+if (hdr.numlocalikautoplaylocks)
+{
+    FSeek(startof(hdr) + hdr.localikautoplaylockindex);
+    mstudioiklock_t iklocks[hdr.numlocalikautoplaylocks] <fgcolor=0xe8daef, read=ReadString(startof(ikchains.ikchain[this.chain].ikchain) + ikchains.ikchain[this.chain].ikchain.sznameindex)>;
+}
+
+#ifdef FEATURE_MOUTHS
+if(hdr.nummouths)
+{
+    FSeek(startof(hdr) + hdr.mouthindex);
+    mstudiomouth_t mouth[hdr.nummouths] <fgcolor=0x5588cc>;
+}
+#endif
 
 if (hdr.numlocalposeparameters)
 {
@@ -234,7 +326,7 @@ if (hdr.numlocalposeparameters)
 }
 
 // animblocks
-#ifdef FEATURE_FRAMEANIM
+#ifdef FEATURE_ANIMBLOCK
 Assert(exists(hdr.szanimblocknameindex));
 Assert(exists(hdr.numanimblocks));
 Assert(exists(hdr.animblockindex));

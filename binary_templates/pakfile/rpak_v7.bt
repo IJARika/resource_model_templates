@@ -59,7 +59,7 @@ struct PakHdr_t
     int magic;
     short version;
     short flags;
-    uint64_t createdTime;
+    FILETIME createdTime;
     uint64_t crc;
 
     int64_t cmpSize; // compressed data size
