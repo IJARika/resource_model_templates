@@ -1,0 +1,186 @@
+//------------------------------------------------
+//--- 010 Editor v12.0.1 Binary Template
+//
+//      File: vtx.bt
+//   Authors: Valve
+//   Version: 7
+//   Purpose: Valve Mesh Strip File
+//  Category: Struct
+// File Mask: *.vtx, *.sw.vtx, *.dx80.vtx, *.dx90.vtx, *.dx11.vtx
+//  ID Bytes: 07 00 00 00
+//   History: 
+//------------------------------------------------
+
+#define HWDATA
+
+#include "../source_math.bt"
+#include "../vertex/headers/vertex_h.bt"
+
+struct VertexGroupHeader_t
+{
+	int id;			// 0x47567430	'0tVG'
+	int version;	// 1
+	int unk_8;		// Usually 0, checksum? header index? data offset?
+	int dataSize;	// Total size of data + header in starpak
+
+	// unsigned char
+	int64_t boneStateChangeOffset; // offset to bone remap buffer
+	int64_t boneStateChangeCount;  // number of "bone remaps" (size: 1)
+
+	// MeshHeader_t
+	int64_t meshOffset;   // offset to mesh buffer
+	int64_t meshCount;    // number of meshes (size: 0x48)
+
+	// unsigned short
+	int64_t indexOffset;     // offset to index buffer
+	int64_t indexCount;      // number of indices (size: 2 (uint16_t))
+
+	// uses dynamic sized struct, similar to RLE animations
+	int64_t vertOffset;    // offset to vertex buffer
+	int64_t vertCount;     // number of chars in vertex buffer
+
+	// vvw::mstudioboneweightextra_t
+	int64_t extraBoneWeightOffset;   // offset to extended weights buffer
+	int64_t extraBoneWeightSize;    // number of chars in extended weights buffer
+
+	// there is one for every LOD mesh
+	// i.e, unknownCount == lod.meshCount for all LODs
+	int64_t unknownOffset;   // offset to buffer
+	int64_t unknownCount;    // count (size: 0x30)
+
+	// ModelLODHeader_t
+	int64_t lodOffset;       // offset to LOD buffer
+	int64_t lodCount;        // number of LODs (size: 0x8)
+
+	// vvd::mstudioboneweight_t
+	int64_t legacyWeightOffset;	// seems to be an offset into the "external weights" buffer for this mesh
+	int64_t legacyWeightCount;   // seems to be the number of "external weights" that this mesh uses
+
+	// vtx::StripHeader_t
+	int64_t stripOffset;    // offset to strips buffer
+	int64_t stripCount;     // number of strips (size: 0x23)
+
+	int64_t unused[8];
+};
+
+struct MeshHeader_t
+{
+	int64_t flags;	// mesh flags
+
+	// uses dynamic sized struct, similar to RLE animations
+	uint32_t vertOffset;	// start offset for this mesh's vertices
+	uint32_t vertCacheSize;	// size of the vertex structure
+	uint32_t vertCount;		// number of vertices
+
+	int unk_14;
+
+	// vvw::mstudioboneweightextra_t
+	int extraBoneWeightOffset;	// start offset for this mesh's extra bone weights
+	int extraBoneWeightSize;	// size or count of extra bone weights
+
+	// unsigned short
+	int indexOffset;		// index into indices
+	int indexCount;			// number of indices
+
+	// vvd::mstudioboneweight_t
+	int legacyWeightOffset;	// index into legacy weights (vvd)
+	int legacyWeightCount;	// number of legacy weights
+
+	// vtx::StripHeader_t
+	int stripOffset;        // index into strips
+	int stripCount;			// number of strips
+
+	// might be stuff like topologies and or bonestates, definitely unused
+	int unk_38[4];
+
+	/*int numBoneStateChanges;
+	int boneStateChangeOffset;
+
+	// MDL Version 49 and up only
+	int numTopologyIndices;
+	int topologyOffset;*/
+};
+
+struct ModelLODHeader_t
+{
+	uint16_t meshIndex;
+	uint16_t meshCount;
+
+	float switchPoint;
+};
+
+struct UnkVgData_t
+{
+	int64_t unk_0;
+	float unk_8;
+
+	char data_C[0x24];
+};
+
+VertexGroupHeader_t hdr <fgcolor=0x99CC44>;
+
+FSeek(hdr.boneStateChangeOffset);
+uint8_t boneStateChanges[hdr.boneStateChangeCount] <fgcolor=cDkGreen>;
+
+FSeek(hdr.unknownOffset);
+UnkVgData_t unk_data[hdr.unknownCount] <fgcolor=cYellow>;
+
+struct Mesh_t
+{
+    MeshHeader_t mesh <fgcolor=cLtRed>;
+
+    if (!mesh.flags)
+        return;
+
+    // these should really only ever have one strip, so we'll ignore it for parsing
+    // never seen more than one strip, and respawn doesn't have more than one strip in vtx ever (starting with r1)
+    Assert(mesh.stripCount == 1);
+    
+    FSeek(hdr.indexOffset + (mesh.indexOffset * 2));
+    unsigned short indice[mesh.indexCount] <bgcolor=cLtBlue>;
+
+    FSeek(hdr.vertOffset + mesh.vertOffset);
+    if(mesh.extraBoneWeightSize)
+    {
+        local int64_t vertIdx;
+        struct {
+            for(vertIdx = 0; vertIdx < mesh.vertCount; vertIdx++)
+            {
+                FSeek(hdr.vertOffset + mesh.vertOffset + (mesh.vertCacheSize * vertIdx));
+                VertexData_t vertex(mesh.flags, hdr.extraBoneWeightOffset + mesh.extraBoneWeightOffset);
+            }
+        } verts;
+    }
+    else
+    {
+        Vertex_t verts(mesh.flags)[mesh.vertCount] <bgcolor=cDkBlue, optimize=true>;
+    }
+
+
+    // conversion leftovers?
+    FSeek(hdr.stripOffset + (mesh.stripOffset * sizeof(StripHeader_t)));
+    StripHeader_t strips[mesh.stripCount] <bgcolor=cLtPurple, read=Str("- %i vertices, %i indices", this.numVerts, this.numIndices)>; 
+
+    // for all verts or none
+    FSeek(hdr.legacyWeightOffset + (mesh.legacyWeightOffset * sizeof(mstudioboneweight_t)));
+    mstudioboneweight_t legacyBoneWeights[mesh.legacyWeightCount] <bgcolor=cDkGreen>;
+};
+
+struct LOD_t(const int64_t lodPtr, const int64_t meshPtr)
+{
+    FSeek(lodPtr);
+    ModelLODHeader_t lod <bgcolor=cLtGray>;
+
+    local int64_t meshIdx;
+    for(meshIdx = 0; meshIdx < lod.meshCount; meshIdx++)
+    {
+        FSeek(meshPtr + (meshIdx * sizeof(MeshHeader_t)) + (lod.meshIndex * sizeof(MeshHeader_t)));
+        Mesh_t mesh <read=Str("- %i vertices, %i indices, %i weights", this.mesh.vertCount, this.mesh.indexCount, this.mesh.extraBoneWeightSize / 4)>;
+    }
+};
+
+for(i = 0; i < hdr.lodCount; i++)
+{
+    FSeek(startof(hdr) + sizeof(VertexGroupHeader_t));
+    LOD_t lod(hdr.lodOffset + (i * sizeof(ModelLODHeader_t)), hdr.meshOffset) <read=Str("======== LOD %i ========", this.lod.switchPoint)>;
+}

@@ -7,33 +7,13 @@
 //   Purpose: Respawn Extra Weight Files
 //  Category: Model
 // File Mask: *.vvw
-//  ID Bytes: n/a
+//  ID Bytes: 
 //   History: 
 //------------------------------------------------
 
 
 #include "../source_math.bt"
-
-#define MAX_NUM_BONES_PER_VERT  3
-#define MAX_NUM_LODS            8
-
-/* STRUCTS */
-struct vertexBoneWeightsExtraFileHeader_t
-{
-	int checksum; // same as studiohdr_t, ensures sync
-	int version; // should be 1
-
-	int numLODVertexes[MAX_NUM_LODS]; // maybe this but the others don't get filled?
-
-	int weightDataStart; // index into mstudioboneweightextra_t array
-};
-
-struct mstudioboneweightextra_t
-{
-	short	weight; // weight = this / 32767.0
-	short   bone;
-};
-
+#include "../vertex/headers/vertex_h.bt"
 
 /* PARSE DATA*/
 vertexBoneWeightsExtraFileHeader_t hdr <bgcolor=cYellow>;

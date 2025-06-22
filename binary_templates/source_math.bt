@@ -78,6 +78,22 @@ struct Vector48
     hfloat z;
 };
 
+struct Vector64
+{
+    unsigned __int64 x : 21;
+    unsigned __int64 y : 21;
+    unsigned __int64 z : 22;
+};
+
+string ReadVector64(const Vector64& vec)
+{
+    local const int x = ((float)vec.x * 0.0009765625) - 1024.0;
+    local const int y = ((float)vec.y * 0.0009765625) - 1024.0;
+    local const int z = ((float)vec.z * 0.0009765625) - 2048.0;
+
+    return Str("< %f, %f, %f >", x, y, z);    
+}
+
 // quaternion
 struct Quaternion
 {
@@ -144,9 +160,24 @@ enum <int> boolean
 
 typedef byte bool;
 
-struct VertexColor_t
+struct Color32
 {
 	uint8 r, g, b, a;
+};
+
+enum <uint8_t> MaterialShaderType_t
+{
+	RGDU = 0x0,
+	RGDP = 0x1,
+	RGDC = 0x2,
+	SKNU = 0x3,
+	SKNP = 0x4,
+	SKNC = 0x5,
+	WLDU = 0x6,
+	WLDC = 0x7,
+	PTCU = 0x8,
+	PTCS = 0x9,
+	RGBS = 0xA,
 };
 
 // silly guy

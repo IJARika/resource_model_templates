@@ -20,21 +20,6 @@ struct MaterialAssetCPU_t
 	int unk_C; // varies between shaders?
 };
 
-enum <uint8_t> MaterialShaderType_t
-{
-	RGDU = 0x0,
-	RGDP = 0x1,
-	RGDC = 0x2,
-	SKNU = 0x3,
-	SKNP = 0x4,
-	SKNC = 0x5,
-	WLDU = 0x6,
-	WLDC = 0x7,
-	PTCU = 0x8,
-	PTCS = 0x9,
-	RGBS = 0xA,
-};
-
 struct MaterialBlendState_t
 {
 	int unk : 1;

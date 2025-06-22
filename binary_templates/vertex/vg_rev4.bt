@@ -1,0 +1,125 @@
+//------------------------------------------------
+//--- 010 Editor v12.0.1 Binary Template
+//
+//      File: vtx.bt
+//   Authors: Valve
+//   Version: 7
+//   Purpose: Valve Mesh Strip File
+//  Category: Struct
+// File Mask: *.vtx, *.sw.vtx, *.dx80.vtx, *.dx90.vtx, *.dx11.vtx
+//  ID Bytes: 07 00 00 00
+//   History: 
+//------------------------------------------------
+
+#define HWDATA
+
+#include "../source_math.bt"
+#include "../vertex/headers/vertex_h.bt"
+
+BitfieldDisablePadding();
+struct VertexGroupHeader_t
+{
+	uint8_t lodIndex;
+    uint8_t lodCount;	// number of lods contained within this group
+    uint8_t groupIndex;	// vertex group ind
+    uint8_t lodMap;		// lods in this group, each bit is a lod
+    
+    uint32_t lodOffset;
+};
+
+struct MeshHeader_t
+{
+	uint64_t flags;
+
+    uint32_t vertCount;					// number of vertices
+    uint16_t vertCacheSize;				// number of bytes used from the vertex buffer
+    uint16_t vertBoneCount;				// how many bones are used by vertices in this mesh, this will be from StripHeader_t
+    
+    uint32_t indexOffset;				// start offset for this mesh's "indices"
+    uint32_t indexCount : 28;			// number of indices
+    uint32_t indexType : 4;				// tri quad? StripHeaderFlags_t, might be important. indexGroups?
+    
+    uint32_t vertOffset;				// start offset for this mesh's vertices
+    uint32_t vertBufferSize;			// TOTAL size of vertex buffer
+    
+    uint32_t extraBoneWeightOffset;		// start offset for this mesh's extra bone weights
+    uint32_t extraBoneWeightSize;		// size or count of extra bone weights
+    
+    uint32_t blendShapeVertOffset;
+    uint32_t blendShapeVertBufferSize;	// shapeCount = meshCountBlends in mstudiomodel_t
+};
+
+struct ModelLODHeader_t
+{
+	uint8_t meshCount;
+    uint8_t meshIndex;	// for lod, probably 0 in most cases
+    uint8_t lodLevel;	// lod level that this header represents
+    uint8_t groupIndex;	// vertex group index
+    
+    uint32_t meshOffset;
+};
+BitfieldEnablePadding();
+
+struct Mesh_t
+{
+    MeshHeader_t mesh <fgcolor=cLtRed>;
+
+    if (!mesh.flags)
+        return;
+    
+    FSeek(startof(mesh.indexOffset) + mesh.indexOffset);
+    unsigned short indice[mesh.indexCount] <bgcolor=cLtBlue>;
+
+    FSeek(startof(mesh.vertOffset) + mesh.vertOffset);
+    if(mesh.extraBoneWeightSize)
+    {
+        local int64_t vertIdx;
+        struct {
+            for(vertIdx = 0; vertIdx < mesh.vertCount; vertIdx++)
+            {
+                FSeek(startof(mesh.vertOffset) + mesh.vertOffset + (mesh.vertCacheSize * vertIdx));
+                VertexData_t vertex(mesh.flags, startof(mesh.extraBoneWeightOffset) + mesh.extraBoneWeightOffset);
+            }
+        } verts;
+    }
+    else
+    {
+        Vertex_t verts(mesh.flags)[mesh.vertCount] <bgcolor=cDkBlue, optimize=true>;
+    }
+
+    if (mesh.blendShapeVertBufferSize)
+    {
+        FSeek(startof(mesh.blendShapeVertOffset) + mesh.blendShapeVertOffset);
+        BlendShapeVertex_s blendShapeVerts[mesh.blendShapeVertBufferSize / sizeof(BlendShapeVertex_s)] <fgcolor=cLtBlue>;
+    }
+};
+
+struct LOD_t
+{
+    ModelLODHeader_t lod <bgcolor=cLtGray>;
+
+    local int64_t meshIdx;
+    for(meshIdx = 0; meshIdx < lod.meshCount; meshIdx++)
+    {
+        FSeek(startof(lod.meshOffset) + lod.meshOffset + (meshIdx * sizeof(MeshHeader_t)));
+        Mesh_t mesh <read=Str("- %i vertices, %i indices, %i weights", this.mesh.vertCount, this.mesh.indexCount, this.mesh.extraBoneWeightSize / 4)>;
+
+        FSeek(startof(mesh.mesh.blendShapeVertOffset) + mesh.mesh.blendShapeVertOffset + mesh.mesh.blendShapeVertBufferSize);
+    }
+};
+
+local int hdrIdx = 0;
+while(Align(FTell(), 16) < FileSize())
+{
+    VertexGroupHeader_t hdr <fgcolor=0x99CC44>;
+
+    for(i = 0; i < hdr[hdrIdx].lodCount; i++)
+    {
+        FSeek(startof(hdr[hdrIdx].lodOffset) + hdr[hdrIdx].lodOffset + (i * sizeof(ModelLODHeader_t)));
+        LOD_t lod <read=Str("======== LOD %i ========", this.lod.lodLevel)>;
+    }
+
+    hdrIdx++;
+
+    FSeek(Align(FTell(), 16));
+}

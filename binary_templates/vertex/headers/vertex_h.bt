@@ -1,0 +1,528 @@
+//------------------------------------------------
+//--- 010 Editor v12.0.1 Binary Template
+//
+//      File: vertex_h.bt
+//   Authors: Valve, Rika
+//   Version: 0.1
+//   Purpose: Studio Vertex Files
+//  Category: Model
+// File Mask:
+//  ID Bytes:
+//   History: 
+//------------------------------------------------
+
+#include "../source_math.bt"
+
+#ifndef STUDIO_VERTEX_H
+#define STUDIO_VERTEX_H
+
+#define MAX_NUM_LODS 8
+#define MAX_NUM_BONES_PER_VERT 3
+
+//
+// VTX
+//
+
+#ifndef HWDATA
+struct FileHeader_t
+{
+	// file version as defined by OPTIMIZED_MODEL_FILE_VERSION (currently 7)
+	int version;
+
+	// hardware params that affect how the model is to be optimized.
+	int vertCacheSize;
+	unsigned short maxBonesPerStrip;
+	unsigned short maxBonesPerFace;
+	int maxBonesPerVert;
+
+	// must match checkSum in the .mdl
+	int checkSum;
+
+	int numLODs; // Also specified in ModelHeader_t's and should match
+
+	// Offset to materialReplacementList Array. one of these for each LOD, 8 in total
+	int materialReplacementListOffset;
+
+    // Defines the size and location of the body part array
+	int numBodyParts;
+	int bodyPartOffset;
+};
+
+struct BodyPartHeader_t
+{
+	// Model array
+	int numModels;
+	int modelOffset;
+};
+
+struct ModelHeader_t
+{
+	//LOD mesh array
+	int numLODs;   //This is also specified in FileHeader_t
+	int lodOffset;
+};
+
+struct ModelLODHeader_t
+{
+    //Mesh array
+	int numMeshes;
+	int meshOffset;
+
+	float switchPoint;
+};
+
+enum <ubyte> MeshFlags_t
+{ 
+	// these are both material properties, and a mesh has a single material.
+	MESH_IS_TEETH	= 0x01, 
+	MESH_IS_EYES	= 0x02
+};
+
+struct MeshHeader_t
+{
+	int numStripGroups;
+	int stripGroupHeaderOffset;
+
+	MeshFlags_t flags;
+};
+#endif
+
+enum <ubyte> StripGroupFlags_t
+{
+	STRIPGROUP_IS_HWSKINNED		 = 0x02,
+	STRIPGROUP_IS_DELTA_FLEXED	 = 0x04,
+	STRIPGROUP_SUPPRESS_HW_MORPH = 0x08,	// NOTE: This is a temporary flag used at run time.
+};
+
+struct StripGroupHeader_t
+{
+	// These are the arrays of all verts and indices for this mesh.  strips index into this.
+	int numVerts;
+	int vertOffset;
+
+	int numIndices;
+	int indexOffset;
+
+	int numStrips;
+	int stripOffset;
+
+	StripGroupFlags_t flags;
+
+	// The following fields are only present if MDL version is >=49
+	// Points to an array of unsigned shorts (16 bits each)
+	int numTopologyIndices;
+	int topologyOffset;
+};
+
+enum <ubyte> StripHeaderFlags_t
+{
+	STRIP_IS_TRILIST		= 0x01,
+	STRIP_IS_QUADLIST_REG	= 0x02,		// Regular sub-d quads
+	STRIP_IS_QUADLIST_EXTRA = 0x04		// Extraordinary sub-d quads
+};
+
+
+// A strip is a piece of a stripgroup which is divided by bones 
+struct StripHeader_t
+{
+	int numIndices;
+	int indexOffset;
+
+	int numVerts;    
+	int vertOffset;
+
+	short numBones;
+
+	StripHeaderFlags_t flags;
+
+	int numBoneStateChanges;
+	int boneStateChangeOffset;
+
+	// MDL Version 49 and up only
+	int numTopologyIndices;
+	int topologyOffset;
+};
+
+#ifndef HWDATA
+struct Vertex_t
+{
+	// these index into the mesh's vert[origMeshVertID]'s bones
+	unsigned char boneWeightIndex[MAX_NUM_BONES_PER_VERT];
+	unsigned char numBones;
+
+	unsigned short origMeshVertID;
+
+	// for sw skinned verts, these are indices into the global list of bones
+	// for hw skinned verts, these are hardware bone indices
+	char boneID[MAX_NUM_BONES_PER_VERT];
+};
+
+struct MaterialReplacementHeader_t
+{
+	short materialID;
+	int replacementMaterialNameOffset;
+};
+
+struct MaterialReplacementListHeader_t
+{
+	int numReplacements;
+	int replacementOffset;
+};
+
+struct BoneStateChangeHeader_t
+{
+	int hardwareID;
+	int newBoneID;
+};
+#endif
+
+
+//
+// VVD
+//
+
+struct vertexFileHeader_t
+{
+	int id; // MODEL_VERTEX_FILE_ID
+	int version; // MODEL_VERTEX_FILE_VERSION
+	int checksum; // same as studiohdr_t, ensures sync
+
+	int numLODs; // num of valid lods
+	int numLODVertexes[MAX_NUM_LODS]; // num verts for desired root lod
+
+	int numFixups; // num of vertexFileFixup_t
+
+	int fixupTableStart; // offset from base to fixup table
+	int vertexDataStart; // offset from base to vertex block
+	int tangentDataStart; // offset from base to tangent block
+};
+
+struct vertexFileFixup_t
+{
+	int		lod;				// used to skip culled root lod
+	int		sourceVertexID;		// absolute index from start of vertex/tangent blocks
+	int		numVertexes;
+};
+
+struct mstudioweightextra_t
+{
+	short weight[3]; // value divided by 32767.0
+
+	short pad; // likely alignment
+
+	int extraweightindex; // base index for vvw, add (weightIdx - 3)
+};
+
+struct mstudioboneweight_t
+{
+	union
+	{
+		float weight[MAX_NUM_BONES_PER_VERT];
+		mstudioweightextra_t weightextra; // only in apex (v54)
+	} weight_shared; // we have to have a member name in 010
+
+	unsigned char bone[MAX_NUM_BONES_PER_VERT]; // set to unsigned so we can read it
+	char	numbones;
+};
+
+struct mstudiovertex_t
+{
+	mstudioboneweight_t	m_BoneWeights;
+	Vector m_vecPosition;
+	Vector m_vecNormal;
+	Vector2D m_vecTexCoord;
+};
+
+
+//
+// VVC
+//
+
+struct vertexColorFileHeader_t
+{
+	int id; // IDCV
+	int version; // 1
+	int checksum; // same as studiohdr_t, ensures sync
+
+	int numLODs; // num of valid lods
+	int numLODVertexes[MAX_NUM_LODS]; // num verts for desired root lod
+
+	int colorDataStart;
+	int uv2DataStart;
+};
+
+
+//
+// VVW
+//
+
+struct vertexBoneWeightsExtraFileHeader_t
+{
+	int checksum; // same as studiohdr_t, ensures sync
+	int version; // should be 1
+
+	int numLODVertexes[MAX_NUM_LODS]; // maybe this but the others don't get filled?
+
+	int weightDataStart; // index into mstudioboneweightextra_t array
+};
+
+struct mstudioboneweightextra_t
+{
+	short	weight; // weight = this / 32767.0
+	short   bone;
+};
+
+
+//
+// VG
+//
+
+#ifdef HWDATA
+// mesh flags, these are the same across all versions
+// mimics shader input flags
+#define VERT_POSITION				0x3		// starting with rmdl 13 position is treated more like an enum, thankfully reverse compatible
+
+#define VERT_COLOR					0x10	// size of 4
+
+#define VERT_UNK					0x40	// size of 8??? flag gets ignored, is this flag for having mesh data? color2?
+
+#define VERT_NORMAL_UNPACKED		0x100	// size of 12
+#define VERT_NORMAL_PACKED			0x200	// size of 4
+#define VERT_TANGENT_FLOAT3			0x400	// size of 12
+#define VERT_TANGENT_FLOAT4			0x800	// size of 16, size is ignored for vertex size calculation
+
+#define VERT_BLENDINDICES			0x1000	// size of 4, bone indices and count
+#define VERT_BLENDWEIGHTS_UNPACKED	0x2000	// size of 8, two floats, presumably weights
+#define VERT_BLENDWEIGHTS_PACKED	0x4000	// size of 4, two uint16_ts packed with a weight
+
+// thanks rexx
+#define VERT_TEXCOORD_BITS			4 // nibble
+#define VERT_TEXCOORD_MASK			((1 << VERT_TEXCOORD_BITS) - 1)
+const int64_t VERT_TEXCOORD_SHIFT(const int n)                  { return (24 + (n * VERT_TEXCOORD_BITS)); }
+const int64_t VERT_TEXCOORDn(const int n)                       { return ((uint64_t)(VERT_TEXCOORD_MASK) << VERT_TEXCOORD_SHIFT(n)); }
+const int64_t VERT_TEXCOORDn_FMT(const int n, const int fmt)	{ return ((uint64_t)(fmt) << VERT_TEXCOORD_SHIFT(n)); }
+
+// size depends on format, probably can only be certain formats (limited by size lookup micro lut)
+//#define VERT_TEXCOORD0				VERT_TEXCOORDn(0) // commonly used as the first uv 
+//#define VERT_TEXCOORD2				VERT_TEXCOORDn(2) // commonly used as the second uv
+//#define VERT_TEXCOORD3				VERT_TEXCOORDn(3) // used in 'wind'/folliage models, the vertex shader uses the first value as a non float field
+
+enum eVertPositionType
+{
+	VG_POS_NONE,
+	VG_POS_UNPACKED,	// Vector
+	VG_POS_PACKED64,	// Vector64
+	VG_POS_PACKED48,	// UNKNOWN
+};
+
+// assumption as it has never shipped
+struct BlendWeights_s
+{
+	float weight[2];
+};
+
+struct BlendWeightsPacked_s
+{
+	uint16_t weight[2];	// packed weight with a max value of 32767, divide value by 32767 to get weight. weights will always correspond to first and second bone
+	                    // if the mesh has extra bone weights the second value will be used as an index into the array of extra bone weights, max value of 65535.
+};
+
+struct BlendWeightIndices_s
+{
+	uint8_t bone[3];	// when the model doesn't have extra bone weights all three are used for bone indices, otherwise in order they will be used for: first bone, last bone (assumes vvd->vg), unused.
+	uint8_t boneCount;	// number of bones this vertex is weighted to excluding the base weight (value of 0 if only one weight, max of 15 with 16 weights)
+};
+
+struct PackedNormalTangent
+{
+    int tangent : 10;
+    int norm1 : 9;
+    int norm2 : 9;
+    int norm_sign : 1;
+    int norm_dropped : 2;
+    int binorm_sign : 1; // for tangent
+};
+
+string UnpackNormal(PackedNormalTangent& TBN)
+{
+        // normal 
+		local int normalSign = TBN.norm_sign ? -255 : 255;
+
+		local float norm1 = TBN.norm1  + -255.5;
+		local float norm2 = TBN.norm2  + -255.5;
+
+        // remove 1.0 / if issues occur
+
+        local float compressFactor = 1.0 / Sqrt(((norm2 * norm2) + (255.0 * 255.0)) + (norm1 * norm1));
+
+		local float valueNorm1, valueNorm2, valueDropped;
+
+        valueNorm1 = norm1 * compressFactor; // (1.0 / compressFactor) if issues occur
+		valueNorm2 = norm2 * compressFactor;
+		valueDropped = normalSign * compressFactor;
+
+        local Vector normal;
+   
+        // check which axis was dropped
+        switch(TBN.norm_dropped)
+        {
+            case 0:
+                normal.x = valueDropped;
+			   normal.y = valueNorm2;
+			    normal.z = valueNorm1;
+                break;
+            case 1:
+                normal.x = valueNorm1;
+			   normal.y = valueDropped;
+			    normal.z = valueNorm2;
+                break;
+            case 2:
+                normal.x = valueNorm2;
+			   normal.y = valueNorm1;
+			    normal.z = valueDropped;
+                break;
+            default:
+                break;
+        };
+
+		float r2y = 1 + normal.z;
+		r2y = 1.f / r2y;
+		float r2z = -r2y * normal.x;
+		float r2w =normal.y *normal.y;
+		float r3x = r2z *normal.y;
+		float r4x = -r2y * r2w + 1;
+		float r4y = -normal.x;
+		float r4z = -normal.y;
+		float r3z = r2z * normal.x + 1;
+		float r3y;
+		float r3w = r4y;
+		if (normal.z < -0.999899983)
+		{
+			r2y = 0;
+			r2z = -1;
+			r2w = 0;
+		}
+		else
+		{
+			r2y = r3z;
+			r2z = r3x;
+			r2w = r3w;
+		}
+		float r4w = r3x;
+		if (normal.z < -0.999899983)
+		{
+			r3x = -1;
+			r3y = 0;
+			r3z = 0;
+		}
+		else
+		{
+			r3x = r4w;
+			r3y = r4x;
+			r3z = r4z;
+		}
+
+		float x = TBN.tangent * 0.00614192151;
+		float r2x = Sin(x);
+		r4x = Cos(x);
+		r3x *= r2x;
+		r3y *= r2x;
+		r3z *= r2x;
+		r2x = r2y * r4x + r3x;
+		r2y = r2z * r4x + r3y;
+		r2z = r2w * r4x + r3z;
+
+		// normalizing
+		float r1w = r2x * r2x + r2y * r2y + r2z * r2z;
+		r1w = 1.f / Sqrt(r1w);
+		r2x *= r1w;
+		r2y *= r1w;
+		r2z *= r1w;
+
+        //float x = TBN.tangent * compressFactor;
+        //x = 0.00614192151 * x;
+		//float r2x = Sin(x);
+
+        // where other values??
+        local Vector4D tangent;
+
+        tangent.x = r2x;
+        tangent.y = r2y;
+        tangent.z = r2z;
+
+        tangent.w = TBN.binorm_sign ? -1 : 1;
+
+		return Str("< %f, %f, %f > < %f, %f, %f, %f >", normal.x,normal.y, normal.z, tangent.x, tangent.y, tangent.z, tangent.w);
+};
+
+struct Vertex_t(const uint64_t flags)
+{
+    // pos
+    switch(flags & VERT_POSITION)
+    {
+    case VG_POS_UNPACKED:
+	    Vector positionsUnpacked;
+        break;
+    case VG_POS_PACKED64:
+	    Vector64 positionPacked;
+        break;
+    case VG_POS_PACKED48:
+	    short positionPacked[3];
+        break;
+    default:
+        break;
+    }
+
+    // weights
+    if (flags & VERT_BLENDWEIGHTS_UNPACKED)    
+        BlendWeights_s blendWeights;
+
+    if (flags & VERT_BLENDWEIGHTS_PACKED)    
+        BlendWeightsPacked_s blendWeightsPacked;
+
+    if (flags & VERT_BLENDINDICES)            
+	    BlendWeightIndices_s blendIndices;
+
+    // normals
+    if (flags & (VERT_NORMAL_UNPACKED | VERT_TANGENT_FLOAT3))
+        Assert(0);
+
+    if (flags & VERT_NORMAL_PACKED)            
+	    PackedNormalTangent normalTangentPacked <read=UnpackNormal>;
+
+    if (flags & VERT_COLOR)            
+	    Color32 color;
+
+    // texcoords
+    if (flags & VERT_TEXCOORDn_FMT(0, 0x2))            
+	    Vector2D texcoord0;
+
+    if (flags & VERT_TEXCOORDn_FMT(2, 0x2))            
+	    Vector2D texcoord2;
+
+    if (flags & VERT_TEXCOORDn_FMT(3, 0x2))            
+	    Vector2D texcoord3;
+};
+
+struct VertexData_t(const uint64_t flags,const int64_t weightPtr)
+{
+    Vertex_t vert(flags) <bgcolor=cDkBlue>;
+
+    if(vert.blendIndices.boneCount > 1)
+    {
+        FSeek(weightPtr + (vert.blendWeightsPacked.weight[1] * sizeof(mstudioboneweightextra_t)));
+        mstudioboneweightextra_t weight[vert.blendIndices.boneCount - 1] <bgcolor=cBlue>;
+    }
+};
+
+struct BlendShapeVertex_s
+{
+	Vector64 position;		// position changes
+	Vector2D texCoords;
+	Vector2D texCoords1;	// null if not used
+	uint32_t normal;		// same normal as base, tangent is different, related to position obviously
+	Color32 color;
+};
+#endif
+
+#endif

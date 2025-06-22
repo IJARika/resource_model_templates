@@ -11,27 +11,8 @@
 //   History: 
 //------------------------------------------------
 
-
-
 #include "../source_math.bt"
-
-#define MAX_NUM_BONES_PER_VERT  3
-#define MAX_NUM_LODS            8
-
-/* STRUCTS */
-struct vertexColorFileHeader_t
-{
-	int id; // IDCV
-	int version; // 1
-	int checksum; // same as studiohdr_t, ensures sync
-
-	int numLODs; // num of valid lods
-	int numLODVertexes[MAX_NUM_LODS]; // num verts for desired root lod
-
-	int colorDataStart;
-	int uv2DataStart;
-};
-
+#include "../vertex/headers/vertex_h.bt"
 
 /* PARSE DATA*/
 vertexColorFileHeader_t hdr <bgcolor=cYellow>;
@@ -50,7 +31,7 @@ from r1 vmts:
 ===========*/
 
 FSeek(startof(hdr) + hdr.colorDataStart);
-VertexColor_t m_color[hdr.numLODVertexes[0]] <bgcolor=cLtYellow>;
+Color32 m_color[hdr.numLODVertexes[0]] <bgcolor=cLtYellow>;
 
 
 FSeek(startof(hdr) + hdr.uv2DataStart);

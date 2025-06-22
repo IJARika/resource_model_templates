@@ -12,161 +12,7 @@
 //------------------------------------------------
 
 #include "../source_math.bt"
-
-#define MAX_NUM_LODS 8
-#define MAX_NUM_BONES_PER_VERT 3
-
-//
-// vtx structs
-//
-struct FileHeader_t
-{
-	// file version as defined by OPTIMIZED_MODEL_FILE_VERSION (currently 7)
-	int version;
-
-	// hardware params that affect how the model is to be optimized.
-	int vertCacheSize;
-	unsigned short maxBonesPerStrip;
-	unsigned short maxBonesPerFace;
-	int maxBonesPerVert;
-
-	// must match checkSum in the .mdl
-	int checkSum;
-
-	int numLODs; // Also specified in ModelHeader_t's and should match
-
-	// Offset to materialReplacementList Array. one of these for each LOD, 8 in total
-	int materialReplacementListOffset;
-
-    // Defines the size and location of the body part array
-	int numBodyParts;
-	int bodyPartOffset;
-};
-
-struct BodyPartHeader_t
-{
-	// Model array
-	int numModels;
-	int modelOffset;
-};
-
-struct ModelHeader_t
-{
-	//LOD mesh array
-	int numLODs;   //This is also specified in FileHeader_t
-	int lodOffset;
-};
-
-struct ModelLODHeader_t
-{
-    //Mesh array
-	int numMeshes;
-	int meshOffset;
-
-	float switchPoint;
-};
-
-enum <ubyte> MeshFlags_t
-{ 
-	// these are both material properties, and a mesh has a single material.
-	MESH_IS_TEETH	= 0x01, 
-	MESH_IS_EYES	= 0x02
-};
-
-struct MeshHeader_t
-{
-	int numStripGroups;
-	int stripGroupHeaderOffset;
-
-	MeshFlags_t flags;
-};
-
-enum <ubyte> StripGroupFlags_t
-{
-	STRIPGROUP_IS_HWSKINNED		 = 0x02,
-	STRIPGROUP_IS_DELTA_FLEXED	 = 0x04,
-	STRIPGROUP_SUPPRESS_HW_MORPH = 0x08,	// NOTE: This is a temporary flag used at run time.
-};
-
-struct StripGroupHeader_t
-{
-	// These are the arrays of all verts and indices for this mesh.  strips index into this.
-	int numVerts;
-	int vertOffset;
-
-	int numIndices;
-	int indexOffset;
-
-	int numStrips;
-	int stripOffset;
-
-	StripGroupFlags_t flags;
-
-	// The following fields are only present if MDL version is >=49
-	// Points to an array of unsigned shorts (16 bits each)
-	int numTopologyIndices;
-	int topologyOffset;
-};
-
-enum <ubyte> StripHeaderFlags_t
-{
-	STRIP_IS_TRILIST		= 0x01,
-	STRIP_IS_QUADLIST_REG	= 0x02,		// Regular sub-d quads
-	STRIP_IS_QUADLIST_EXTRA = 0x04		// Extraordinary sub-d quads
-};
-
-
-// A strip is a piece of a stripgroup which is divided by bones 
-struct StripHeader_t
-{
-	int numIndices;
-	int indexOffset;
-
-	int numVerts;    
-	int vertOffset;
-
-	short numBones;
-
-	StripHeaderFlags_t flags;
-
-	int numBoneStateChanges;
-	int boneStateChangeOffset;
-
-	// MDL Version 49 and up only
-	int numTopologyIndices;
-	int topologyOffset;
-};
-
-struct Vertex_t
-{
-	// these index into the mesh's vert[origMeshVertID]'s bones
-	unsigned char boneWeightIndex[MAX_NUM_BONES_PER_VERT];
-	unsigned char numBones;
-
-	unsigned short origMeshVertID;
-
-	// for sw skinned verts, these are indices into the global list of bones
-	// for hw skinned verts, these are hardware bone indices
-	char boneID[MAX_NUM_BONES_PER_VERT];
-};
-
-struct MaterialReplacementHeader_t
-{
-	short materialID;
-	int replacementMaterialNameOffset;
-};
-
-struct MaterialReplacementListHeader_t
-{
-	int numReplacements;
-	int replacementOffset;
-};
-
-struct BoneStateChangeHeader_t
-{
-	int hardwareID;
-	int newBoneID;
-};
+#include "../vertex/headers/vertex_h.bt"
 
 struct vertgroup
 {
@@ -300,5 +146,27 @@ for (partIdx = 0; partIdx < vtxhdr.numBodyParts; partIdx++)
 };
 
 
-FSeek(startof(vtxhdr) + vtxhdr.materialReplacementListOffset);
-MaterialReplacementListHeader_t materialReplacementList[vtxhdr.numLODs] <bgcolor=0xDD00AA>;
+struct MaterialReplacement_t(const int64_t baseptr, const int idx)
+{
+    FSeek(baseptr + (sizeof(MaterialReplacementListHeader_t) * idx));
+    MaterialReplacementListHeader_t listhdr <bgcolor=0xDD00AA>;
+
+    if (listhdr.numReplacements)
+    {
+        FSeek(startof(listhdr) + listhdr.replacementOffset);
+        MaterialReplacementHeader_t replaceheader[listhdr.numReplacements] <fgcolor=0xDD00AA, read=ReadString(startof(this) + this.replacementMaterialNameOffset)>;
+    }
+};
+
+const int64_t materialReplacementBaseptr = FTell();
+
+FSeek(materialReplacementBaseptr);
+struct (FileHeader_t& vtxhdr){
+    local const int numLODs = vtxhdr.numLODs;
+
+    for (i = 0; i < vtxhdr.numLODs; i++)
+    {
+        FSeek(materialReplacementBaseptr);
+        MaterialReplacement_t materialReplacementList(startof(vtxhdr) + vtxhdr.materialReplacementListOffset, i) <read=Str("%i replacements", this.listhdr.numReplacements)>;
+    }
+} materialReplacements(vtxhdr) <read=Str("%i material replacement lists (LODs)", numLODs)>;

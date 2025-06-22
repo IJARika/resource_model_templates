@@ -13,63 +13,7 @@
 
 
 #include "../source_math.bt"
-
-#define MAX_NUM_BONES_PER_VERT  3
-#define MAX_NUM_LODS            8
-
-/* STRUCTS */
-struct vertexFileHeader_t
-{
-	int id; // MODEL_VERTEX_FILE_ID
-	int version; // MODEL_VERTEX_FILE_VERSION
-	int checksum; // same as studiohdr_t, ensures sync
-
-	int numLODs; // num of valid lods
-	int numLODVertexes[MAX_NUM_LODS]; // num verts for desired root lod
-
-	int numFixups; // num of vertexFileFixup_t
-
-	int fixupTableStart; // offset from base to fixup table
-	int vertexDataStart; // offset from base to vertex block
-	int tangentDataStart; // offset from base to tangent block
-};
-
-struct vertexFileFixup_t
-{
-	int		lod;				// used to skip culled root lod
-	int		sourceVertexID;		// absolute index from start of vertex/tangent blocks
-	int		numVertexes;
-};
-
-struct mstudioweightextra_t
-{
-	short weight[3]; // value divided by 32767.0
-
-	short pad; // likely alignment
-
-	int extraweightindex; // base index for vvw, add (weightIdx - 3)
-};
-
-struct mstudioboneweight_t
-{
-	union
-	{
-		float	weight[MAX_NUM_BONES_PER_VERT];
-		mstudioweightextra_t weightextra; // only in apex (v54)
-	} weight_shared; // we have to have a member name in 010
-
-	unsigned char bone[MAX_NUM_BONES_PER_VERT]; // set to unsigned so we can read it
-	char	numbones;
-};
-
-struct mstudiovertex_t
-{
-	mstudioboneweight_t	m_BoneWeights;
-	Vector m_vecPosition;
-	Vector m_vecNormal;
-	Vector2D m_vecTexCoord;
-};
-
+#include "../vertex/headers/vertex_h.bt"
 
 /* PARSE DATA*/
 vertexFileHeader_t hdr <bgcolor=cYellow>;

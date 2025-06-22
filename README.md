@@ -9,6 +9,7 @@ Studio Model:
   - rseq (7, 7.1, 10, 11, 12)
   - phys (valve and respawn)
   - vertex (vtx, vvd, vvc, and vvw)
+  - vg (rev1, rev2, rev3, and rev4)
 
 Misc:
   - pakfile
