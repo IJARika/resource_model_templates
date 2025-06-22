@@ -12,6 +12,7 @@
 //------------------------------------------------
 
 #define HWDATA
+#define HWDATA_REV1
 
 #include "../source_math.bt"
 #include "../vertex/headers/vertex_h.bt"
@@ -107,14 +108,6 @@ struct ModelLODHeader_t
 	uint16_t meshCount;
 
 	float switchPoint;
-};
-
-struct UnkVgData_t
-{
-	int64_t unk_0;
-	float unk_8;
-
-	char data_C[0x24];
 };
 
 VertexGroupHeader_t hdr <fgcolor=0x99CC44>;

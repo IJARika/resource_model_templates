@@ -523,6 +523,99 @@ struct BlendShapeVertex_s
 	uint32_t normal;		// same normal as base, tangent is different, related to position obviously
 	Color32 color;
 };
+
+struct UnkVgData_t
+{
+	int64_t unk_0;
+	float unk_8;
+
+	char data_C[0x24];
+};
+
+#ifndef HWDATA_REV1
+#ifndef STUDIO_H
+struct Mesh_t
+{
+    MeshHeader_t mesh <fgcolor=cLtRed>;
+
+    if (!mesh.flags)
+        return;
+    
+    FSeek(startof(mesh.indexOffset) + mesh.indexOffset);
+    unsigned short indice[mesh.indexCount] <bgcolor=cLtBlue>;
+
+    FSeek(startof(mesh.vertOffset) + mesh.vertOffset);
+    if(mesh.extraBoneWeightSize)
+    {
+        local int64_t vertIdx;
+        struct {
+            for(vertIdx = 0; vertIdx < mesh.vertCount; vertIdx++)
+            {
+                FSeek(startof(mesh.vertOffset) + mesh.vertOffset + (mesh.vertCacheSize * vertIdx));
+                VertexData_t vertex(mesh.flags, startof(mesh.extraBoneWeightOffset) + mesh.extraBoneWeightOffset);
+            }
+        } verts;
+    }
+    else
+    {
+        Vertex_t verts(mesh.flags)[mesh.vertCount] <bgcolor=cDkBlue, optimize=true>;
+    }
+
+    // conversion leftovers?
+    // for all verts or none
+    if (exists(mesh.legacyWeightCount) && mesh.legacyWeightCount)
+    {
+        FSeek(startof(mesh.legacyWeightOffset) + mesh.legacyWeightOffset);
+        mstudioboneweight_t legacyBoneWeights[mesh.legacyWeightCount] <bgcolor=cDkGreen>;
+    }
+
+    if (exists(mesh.stripCount) && mesh.stripCount)
+    {
+        FSeek(startof(mesh.stripOffset) + mesh.stripOffset);
+        StripHeader_t strips <bgcolor=cLtPurple, read=Str("- %i vertices, %i indices", this.numVerts, this.numIndices)>; 
+    }
+
+    if (exists(mesh.blendShapeVertBufferSize) && mesh.blendShapeVertBufferSize)
+    {
+        FSeek(startof(mesh.blendShapeVertOffset) + mesh.blendShapeVertOffset);
+        BlendShapeVertex_s blendShapeVerts[mesh.blendShapeVertBufferSize / sizeof(BlendShapeVertex_s)] <fgcolor=cLtBlue>;
+    }
+};
+
+struct LOD_t
+{
+    ModelLODHeader_t lod <bgcolor=cLtGray>;
+
+    // assuming these are for loading chunks into memory instead of the whole file
+    // these get referenced by studio_hw_groupdata_t
+    // verify this
+#ifndef HWDATA_REV4 // one header per data group, no base one for a file
+    if (FileSize() > 0x1000)
+    {
+        local const uint64_t beforeSize = Align(sizeof(VertexGroupHeader_t) + sizeof(ModelLODHeader_t), 16);
+
+        FSeek(startof(lod.meshOffset) + lod.meshOffset - (beforeSize));
+        VertexGroupHeader_t chunk_hdr <fgcolor=0x99CC44>;
+
+        FSeek(startof(chunk_hdr.lodOffset) + chunk_hdr.lodOffset);
+        ModelLODHeader_t chunk_lod <bgcolor=cLtGray>;
+    }
 #endif
+
+    local int64_t meshIdx;
+    for(meshIdx = 0; meshIdx < lod.meshCount; meshIdx++)
+    {
+        FSeek(startof(lod.meshOffset) + lod.meshOffset + (meshIdx * sizeof(MeshHeader_t)));
+        Mesh_t mesh <read=Str("- %i vertices, %i indices, %i weights", this.mesh.vertCount, this.mesh.indexCount, this.mesh.extraBoneWeightSize / 4)>;
+
+#ifdef HWDATA_REV4 // for auto finding headers via alignment
+        FSeek(startof(mesh.mesh.blendShapeVertOffset) + mesh.mesh.blendShapeVertOffset + mesh.mesh.blendShapeVertBufferSize);
+#endif
+    }
+};
+#endif // #ifndef STUDIO_H
+#endif // #ifndef HWDATA_REV1
+
+#endif // #ifdef HWDATA
 
 #endif

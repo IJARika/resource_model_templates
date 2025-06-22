@@ -1,0 +1,122 @@
+//------------------------------------------------
+//--- 010 Editor v12.0.1 Binary Template
+//
+//      File: studio_h.bt
+//   Authors: Rika
+//   Version: 0.1
+//   Purpose: Respawn Model Files
+//  Category: Model
+// File Mask: *.rmdl,*.rrig,*.rseq
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+#include "../source_math.bt"
+
+#ifndef STUDIO_R5_8_H
+#define STUDIO_R5_8_H
+
+
+//
+// bones
+//
+
+struct mstudiolinearbone_t
+{
+	int numbones;
+
+	int flagsindex;
+
+	int	parentindex;
+
+	int	posindex;
+
+	int quatindex;
+
+	int rotindex;
+
+	int posetoboneindex;
+};
+
+struct mstudioattachment_t
+{
+	int sznameindex;
+	int flags;
+
+	int localbone; // parent bone
+
+	matrix3x4_t localmatrix; // attachment point
+};
+
+struct mstudiobbox_t
+{
+	int bone;
+	int group;				// intersection group
+	Vector bbmin;				// bounding box
+	Vector bbmax;
+	int szhitboxnameindex;	// offset to the name of the hitbox.
+
+	int critShotOverride;	// value of one causes this to act as if it was group of 'head', may either be crit override or group override. mayhaps aligned boolean, look into this
+	int hitdataGroupOffset;	// hit_data group in keyvalues this hitbox uses.
+};
+
+
+//
+// animations
+//
+
+struct mstudioikchain_t
+{
+	int	sznameindex;
+
+	int	linktype;
+	int	numlinks;
+	int	linkindex;
+
+	float unk_10;		// no clue what this does tbh, tweaking it does nothing
+	                    // default value: 0.707f
+	                    // this value is similar to default source engine ikchain values
+};
+
+
+//
+// meshes
+//
+
+struct mstudiotexture_t
+{
+	int sznameindex;
+    uint64_t texture;
+};
+
+struct studio_hw_lodata_t
+{
+	short lodLevel;	// lod level that this header represents
+	short groupIndex;	// vertex group index
+	short meshIndex;	// for lod, probably 0 in most cases
+	short meshCount;
+
+	float switchPoint;
+
+	char pad_C[4];
+};
+
+struct studio_hw_groupdata_t
+{
+	int dataOffset; // offset to this section in vg
+	int dataSize;	// size of data in vg
+
+	short lodIndex;		// base lod idx?
+	short lodCount;		// number of lods contained within this group
+	short lodMap;		// lods in this group, each bit is a lod
+
+    char align_pad[2] <hidden=true>;
+};
+
+
+//
+// collision
+//
+
+
+#endif

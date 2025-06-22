@@ -12,7 +12,7 @@
 //------------------------------------------------
 
 #include "../source_math.bt"
-#include "./studio_h.bt"
+#include "../model/headers/studio_h.bt"
 
 // headers
 struct studiohdr_t

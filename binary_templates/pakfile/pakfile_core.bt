@@ -180,7 +180,7 @@ struct {
 } page_data;
 
 // asset deps
-#include "../model/studio_r5_h.bt"
+#include "../model/headers/studio_r5_h.bt"
 
 // asset data
 #include "./pakfile_txtr.bt"

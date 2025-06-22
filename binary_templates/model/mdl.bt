@@ -11,8 +11,6 @@
 //   History: 
 //------------------------------------------------
 
-#include "./studio_h.bt"
-
 // headers
 studiohdr_t hdr <fgcolor=cLtBlue>;
 

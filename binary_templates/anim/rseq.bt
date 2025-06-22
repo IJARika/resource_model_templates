@@ -14,7 +14,7 @@
 local bool canParseAnim = true;
 local int boneCount = 0;
 local int animCount = 0;
-#include "../model/studio_r5_h.bt"
+#include "../model/headers/studio_r5_h.bt"
 
 #ifdef USE_BIG_NUMBERS
 int GetOffset(int offset)

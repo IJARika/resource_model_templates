@@ -12,9 +12,9 @@
 //------------------------------------------------
 
 #define HWDATA
+#define HWDATA_REV4
 
 #include "../source_math.bt"
-#include "../vertex/headers/vertex_h.bt"
 
 BitfieldDisablePadding();
 struct VertexGroupHeader_t
@@ -60,53 +60,7 @@ struct ModelLODHeader_t
 };
 BitfieldEnablePadding();
 
-struct Mesh_t
-{
-    MeshHeader_t mesh <fgcolor=cLtRed>;
-
-    if (!mesh.flags)
-        return;
-    
-    FSeek(startof(mesh.indexOffset) + mesh.indexOffset);
-    unsigned short indice[mesh.indexCount] <bgcolor=cLtBlue>;
-
-    FSeek(startof(mesh.vertOffset) + mesh.vertOffset);
-    if(mesh.extraBoneWeightSize)
-    {
-        local int64_t vertIdx;
-        struct {
-            for(vertIdx = 0; vertIdx < mesh.vertCount; vertIdx++)
-            {
-                FSeek(startof(mesh.vertOffset) + mesh.vertOffset + (mesh.vertCacheSize * vertIdx));
-                VertexData_t vertex(mesh.flags, startof(mesh.extraBoneWeightOffset) + mesh.extraBoneWeightOffset);
-            }
-        } verts;
-    }
-    else
-    {
-        Vertex_t verts(mesh.flags)[mesh.vertCount] <bgcolor=cDkBlue, optimize=true>;
-    }
-
-    if (mesh.blendShapeVertBufferSize)
-    {
-        FSeek(startof(mesh.blendShapeVertOffset) + mesh.blendShapeVertOffset);
-        BlendShapeVertex_s blendShapeVerts[mesh.blendShapeVertBufferSize / sizeof(BlendShapeVertex_s)] <fgcolor=cLtBlue>;
-    }
-};
-
-struct LOD_t
-{
-    ModelLODHeader_t lod <bgcolor=cLtGray>;
-
-    local int64_t meshIdx;
-    for(meshIdx = 0; meshIdx < lod.meshCount; meshIdx++)
-    {
-        FSeek(startof(lod.meshOffset) + lod.meshOffset + (meshIdx * sizeof(MeshHeader_t)));
-        Mesh_t mesh <read=Str("- %i vertices, %i indices, %i weights", this.mesh.vertCount, this.mesh.indexCount, this.mesh.extraBoneWeightSize / 4)>;
-
-        FSeek(startof(mesh.mesh.blendShapeVertOffset) + mesh.mesh.blendShapeVertOffset + mesh.mesh.blendShapeVertBufferSize);
-    }
-};
+#include "../vertex/headers/vertex_h.bt"
 
 local int hdrIdx = 0;
 while(Align(FTell(), 16) < FileSize())
