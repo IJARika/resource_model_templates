@@ -21,4 +21,3 @@ Located in the 'structs' folder.
 
 Studio Model:
   - V47 (with original Xbox structs as well)
-  - V54 (subversions: 8/9/10/11/12/12.1/12.2/13/14/15/16)
