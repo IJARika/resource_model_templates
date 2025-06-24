@@ -319,6 +319,7 @@ struct mstudio_modelvertexdata_t
 };
 
 #ifndef STUDIO_R5_16_H
+#ifndef FEATURE_BODYPART_MESHOFFSET
 struct mstudiobodyparts_t
 {
 	int sznameindex;
@@ -327,6 +328,7 @@ struct mstudiobodyparts_t
 	int base;
 	int modelindex; // index into models array
 };
+#endif
 
 struct mstudioposeparamdesc_t
 {

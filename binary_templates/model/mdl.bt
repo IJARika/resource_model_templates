@@ -14,6 +14,12 @@
 // headers
 studiohdr_t hdr <fgcolor=cLtBlue>;
 
+if (exists(hdr.id) && hdr.id != 0x54534449)
+{
+    Printf("File was not a valid MDL");
+    return;
+}
+
 #ifdef FEATURE_HDR2
 if (exists(hdr.studiohdr2index))
 {
@@ -186,7 +192,7 @@ if(hdr.numlocalnodes > 0)
             FSeek(startof(hdr) + hdr.localnodenameindex + (sizeof(int) * localNodeIdx));
             localnode_t nodes(hdr.localnodeindex + (hdr.numlocalnodes * localNodeIdx)) <read=this.name>;
         }
-    } localnodedata <read=Str("%i nodes", hdr.numlocalnodes)>;
+    } nodes <read=Str("%i nodes", hdr.numlocalnodes)>;
 }
 
 // mesh

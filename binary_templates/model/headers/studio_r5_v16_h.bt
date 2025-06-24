@@ -1,0 +1,197 @@
+//------------------------------------------------
+//--- 010 Editor v12.0.1 Binary Template
+//
+//      File: studio_h.bt
+//   Authors: Rika
+//   Version: 0.1
+//   Purpose: Respawn Model Files
+//  Category: Model
+// File Mask: *.rmdl,*.rrig,*.rseq
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+#include "../source_math.bt"
+
+#ifndef STUDIO_R5_16_H
+#define STUDIO_R5_16_H
+
+
+//
+// bones
+//
+
+struct mstudiobonehdr_t
+{
+	int contents; // See BSPFlags.h for the contents flags
+
+	uint8_t unk_4;
+
+	uint8_t surfacepropLookup; // written on compile in v54
+	uint16_t surfacepropidx; // index into string table for property name
+
+	uint16_t physicsbone; // index into physically simulated bone
+
+	uint16_t sznameindex;
+};
+
+struct mstudiobonedata_t
+{
+	matrix3x4_t poseToBone;
+	Quaternion qAlignment;
+
+	// default values
+	Vector pos;
+	Quaternion quat;
+	RadianEuler rot;
+	Vector scale; // bone scale(?)
+
+	short parent; // parent bone;
+
+	uint16_t unk_76; // gotta be used because there's to 8 bit vars that could've fit here, still may be packing. previously 'unk1'
+
+	int flags;
+
+	uint8_t collisionIndex; // index into sections of collision, phy, bvh, etc. needs confirming
+
+	uint8_t proctype;
+	uint16_t procindex; // procedural rule
+};
+
+struct mstudiolinearbone_t
+{
+	// they cut pos and rot scale, understandable since posscale was never used it tf|2 and they do anims different in apex
+	uint16_t numbones;
+
+	uint16_t flagsindex;
+
+	uint16_t parentindex;
+
+	uint16_t posindex;
+
+	uint16_t quatindex;
+
+	uint16_t rotindex;
+
+	uint16_t posetoboneindex;
+};
+
+struct mstudioattachment_t
+{
+	uint16_t sznameindex;
+	uint16_t localbone; // parent bone
+	int flags;
+
+	matrix3x4_t localmatrix; // attachment point
+};
+
+struct mstudiobbox_t
+{
+	short bone;
+	short group; // intersection group
+
+	Vector bbmin; // bounding box
+	Vector bbmax;
+
+	uint16_t szhitboxnameindex; // offset to the name of the hitbox.
+
+	uint16_t hitdataGroupOffset;	// hit_data group in keyvalues this hitbox uses.
+};
+
+struct mstudiohitboxset_t
+{
+	uint16_t sznameindex;
+
+	uint16_t numhitboxes;
+	uint16_t hitboxindex;
+};
+
+//
+// animations
+//
+
+struct mstudioikchain_t
+{
+	uint16_t sznameindex;
+
+	uint16_t linktype;
+	uint16_t numlinks;
+	uint16_t linkindex;
+
+	float unk_10;	// no clue what this does tbh, tweaking it does nothing
+	                // default value: 0.707f
+};
+
+struct mstudioposeparamdesc_t
+{
+	uint16_t sznameindex;
+
+	uint16_t flags; // ????
+	float start; // starting value
+	float end; // ending value
+	float loop;	// looping range, 0 for no looping, 360 for rotations, etc.
+};
+
+
+//
+// meshes
+//
+
+struct mstudiomesh_t
+{
+	uint16_t material;
+
+	// a unique ordinal for this mesh
+	uint16_t meshid;
+
+	char unk_4[4];
+
+	Vector center;
+};
+
+struct mstudiomodel_t
+{
+	uint16_t unkStringOffset; // goes to bones sometimes; 'small' 'large'
+
+	uint16_t meshCountTotal; // total number of meshes in this mesh
+	uint16_t meshCountBase; // number of normal meshes in this model
+	uint16_t meshCountBlends; // number of blend shape meshes, todo how does this play with more than one base mesh?
+
+	uint16_t meshOffset;
+};
+
+struct mstudiobodyparts_t
+{
+	uint16_t sznameindex;
+
+	uint16_t modelindex;
+
+	int base;
+	int nummodels;
+	int meshOffset; // might be short
+};
+
+struct mstudiotexture_t
+{
+    uint64_t texture;
+};
+
+struct studio_hw_groupdata_t
+{
+	int dataOffset; // offset to this section in compressed vg
+	int dataSizeCompressed; // compressed size of data in vg
+	int dataSizeDecompressed; // decompressed size of data in vg
+	uint8_t dataCompression; // compressionType_t
+
+	uint8_t lodIndex;
+	uint8_t lodCount;	// number of lods contained within this group
+	uint8_t lodMap;		// lods in this group, each bit is a lod
+};
+
+
+//
+// collision
+//
+
+
+#endif

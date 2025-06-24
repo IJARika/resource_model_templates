@@ -202,8 +202,10 @@ struct rle_anim(const uint64_t baseptr, const int animindex, const int frameCoun
     local const uint64_t animbase = (baseptr + animindex);
 
 #ifdef FEATURE_STATICSTRUCTS
+#ifndef RIG_PRESENT
     // for anims without weightlist
     BoneCountCheat(animbase);
+#endif
 #endif
 
     FSeek(animbase);
@@ -471,14 +473,14 @@ void ParseSeqdesc()
 #endif
     animCount = (seqdesc.groupsize[0] * seqdesc.groupsize[1]);
 
-#ifndef RIG_PRESENT
 #ifdef FEATURE_STATICSTRUCTS
     if (seqdesc.weightlistindex == 1 || seqdesc.weightlistindex == 3)
     {
+#ifndef RIG_PRESENT
         boneCount = 0;
+#endif
         canParseAnim = false;
     }
-#endif
 #endif
 
     // pose keys
@@ -521,7 +523,7 @@ void ParseSeqdesc()
     #ifdef USE_BIG_NUMBERS
     int blends[seqdesc.groupsize[0] * seqdesc.groupsize[1]] <fgcolor=0xffff00>;
     #else
-    short blends[seqdesc.groupsize[0] * seqdesc.groupsize[1]] <fgcolor=0xffff00>;
+    uint16_t blends[seqdesc.groupsize[0] * seqdesc.groupsize[1]] <fgcolor=0xffff00>;
     #endif
 
     for(i = 0; i < animCount; i++)
@@ -535,7 +537,7 @@ void ParseSeqdesc()
         mstudioseqweightfixup_t weightfixup[seqdesc.weightFixupCount] <fgcolor=0x9900BB>;
     }
     
-    #ifdef FEATURE_NOINTERPFRAMES
+#ifdef FEATURE_NOINTERPFRAMES
     if (seqdesc.noInterpFrameCount)
     {
         local const int dataSize = GetOffset(seqdesc.szlabelindex) - GetOffset(seqdesc.noInterpFrameOffset);
@@ -547,5 +549,5 @@ void ParseSeqdesc()
         else
             int nointerpframes[seqdesc.noInterpFrameCount] <fgcolor=0x60e060>;
     }
-    #endif
-};
+#endif
+}

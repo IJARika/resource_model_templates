@@ -1,0 +1,161 @@
+//------------------------------------------------
+//--- 010 Editor v12.0.1 Binary Template
+//
+//      File: rmdl_v17.bt
+//   Authors: Rika
+//   Version: 0.1
+//   Purpose: Respawn Model Files
+//  Category: Model
+// File Mask: *.rmdl,*.rrig
+//  ID Bytes: 49 44 53 54 36
+//   History: 
+//------------------------------------------------
+
+#include "../source_math.bt"
+#include "../bvh_h.bt"
+
+#define FEATURE_BVH_SURFACEPROPS
+#define FEATURE_TRIM_HWDATA
+#define FEATURE_NODENAME_FROM_OFFSET
+#define FEATURE_REFACTOR
+
+#define HWDATA
+
+#include "../model/headers/studio_r5_v16_h.bt"
+#include "../model/headers/studio_r5_h.bt"
+#include "../model/headers/studio_h.bt"
+#include "../anim/headers/rseq_v11_h.bt"
+#include "../vertex/headers/vertex_h.bt"
+
+// headers
+struct studiohdr_t
+{
+	int flags;
+    int checksum; // unsure if this is still checksum, there isn't any other files that have it still
+    uint16_t sznameindex; // No longer stored in string block, uses string in header.
+    char name[33]; // The internal name of the model, padding with null chars. last byte always null
+    
+    uint8_t surfacepropLookup; // saved in the file (unsigned dl/fx/ferrofluid_ult_base_puddle)
+    
+    float mass;
+    
+    int contents;
+    
+    uint16_t hitboxsetindex;
+    uint8_t numhitboxsets;
+    
+    uint8_t illumpositionattachmentindex;
+    
+    Vector illumposition;	// illumination center
+    
+    Vector hull_min;		// ideal movement hull size
+    Vector hull_max;
+    
+    Vector view_bbmin;		// clipping bounding box
+    Vector view_bbmax;
+    
+    uint16_t boneCount; // bones
+    uint16_t boneHdrOffset;
+    uint16_t boneDataOffset;
+    
+    uint16_t numlocalseq; // sequences
+    uint16_t localseqindex;
+    
+    // needs to be confirmed
+    uint16_t unk_7E[2]; // added in v13 -> v14
+    
+    // needs to be confirmed
+    char activitylistversion; // initialization flag - have the sequences been indexed?
+    
+    uint8_t numlocalattachments;
+    uint16_t localattachmentindex;
+    
+    uint16_t numlocalnodes;
+    uint16_t localnodenameindex;
+    uint16_t localNodeDataOffset; // offset into an array of int sized offsets that read into the data for each node
+    
+    uint16_t numikchains;
+    uint16_t ikchainindex;
+    
+    uint16_t numtextures; // the material limit exceeds 128, probably 256.
+    uint16_t textureindex;
+    
+    // replaceable textures tables
+    uint16_t numskinref;
+    uint16_t numskinfamilies;
+    uint16_t skinindex;
+    
+    uint16_t numbodyparts;
+    uint16_t bodypartindex;
+    
+    // this is rui meshes
+    uint16_t uiPanelCount;
+    uint16_t uiPanelOffset;
+    
+    uint16_t numlocalposeparameters;
+    uint16_t localposeparamindex;
+    
+    uint16_t surfacepropindex;
+    
+    uint16_t keyvalueindex;
+    
+    uint16_t virtualModel;
+    
+    // hw data lookup from rmdl
+    uint16_t meshCount; // number of meshes per lod
+    
+    uint16_t bonetablebynameindex;
+    
+    uint16_t boneStateOffset;
+    uint16_t boneStateCount;
+    
+    // sets of lods
+    uint16_t groupHeaderOffset;
+    uint16_t groupHeaderCount;
+    
+    uint16_t lodOffset;
+    uint16_t lodCount;
+    
+    // 
+    float fadeDistance;
+    float gathersize; // what. from r5r struct
+    
+    uint16_t numsrcbonetransform;
+    uint16_t srcbonetransformindex;
+    
+    // asset bakery strings if it has any
+    uint16_t sourceFilenameOffset;
+    
+    uint16_t linearboneindex;
+    
+    // used for adjusting weights in sequences, quick lookup into bones that have procbones, unsure what else uses this.
+    uint16_t procBoneCount;
+    uint16_t procBoneOffset; // in order array of procbones and their parent bone indice
+    uint16_t linearProcBoneOffset; // byte per bone with indices into each bones procbone, 0xff if no procbone is present
+    
+    // mostly seen on '_animated' suffixed models
+    // manually declared bone followers are no longer stored in kvs under 'bone_followers', they are now stored in an array of ints with the bone index.
+    uint16_t boneFollowerCount;
+    uint16_t boneFollowerOffset;
+    
+    uint16_t bvhOffset;
+    
+    char bvhUnk[2]; // collision detail for bvh (?)
+    
+    // perhaps these are t he same varibles added in v12.3? cannot find any models that use them previously (pre-v16).
+    // UnkDataType_0_t
+    uint16_t unkDataCount; // unk_0xDA
+    uint16_t unkDataOffset; // unk_0xDC
+    // UnkDataType_1_t
+    uint16_t unkStrcOffset; // unk_0xDE
+
+	int unk_E0;
+};
+
+// bones
+
+// animations
+
+// meshes
+
+#include "./rmdl.bt"
