@@ -229,6 +229,162 @@ struct rle_anim(const uint64_t baseptr, const int animindex, const int frameCoun
     };
 };
 
+struct dp_rot_2x1 (const int frameCount)
+{
+    uint8_t valid <fgcolor=0x2255ff>;   
+    uint8_t total <fgcolor=0x2255ff>;           
+    
+    if (valid < frameCount)
+    {
+        uint8_t frameIndices[total] <fgcolor=0x2266dd>;
+    }
+    
+    AnimQuat32 packedQuats[valid] <fgcolor=0x5522ff>;
+    AxisFixup_t axisFixups[total] <fgcolor=0x3344ff>;
+};
+
+// flag 0x8
+struct dp_pos_1x1 (const int frameCount)
+{
+    uint8_t total <fgcolor=0x55ff22>;       
+    
+    float16 scale <fgcolor=0x22ff88>;
+
+    if (total < frameCount)
+    {
+        uint8_t frameIndices[total] <fgcolor=0x66dd22>;
+    }
+    
+    AxisFixup_t axisFixups[total] <fgcolor=0x44ff33>;
+};
+
+// flag 0x10
+struct dp_pos_2x1 (const int frameCount)
+{
+    uint8_t valid <fgcolor=0x55ff22>;   
+    uint8_t total <fgcolor=0x55ff22>;     
+    
+    if (!total)
+        return;
+
+    if (valid < frameCount)
+    {
+        uint8_t frameIndices[total] <fgcolor=0x66dd22>;
+    }
+    
+    AnimPos64 packedPositions[valid] <fgcolor=0x22ff88>;
+    AxisFixup_t axisFixups[total] <fgcolor=0x44ff33>;
+};
+
+// framemovements
+struct dp_pos_2x2 (const int frameCount)
+{
+    uint16_t valid <fgcolor=0x55ff22>;   
+    uint16_t total <fgcolor=0x55ff22>;     
+    
+    if (!total)
+        return;
+
+    if (valid < frameCount)
+    {
+        uint16_t frameIndices[total] <fgcolor=0x66dd22>;
+    }
+    
+    AnimPos64 packedPositions[valid] <fgcolor=0x22ff88>;
+    AxisFixup_t axisFixups[total] <fgcolor=0x44ff33>;
+};
+
+
+struct dp_scale (const int frameCount)
+{
+    uint8_t total <fgcolor=0x22ddff>;       
+    
+    if (total < frameCount)
+    {
+        uint8_t frameIndices[total] <fgcolor=0x33bbff>;
+    }
+    
+    Vector48 scales[total] <fgcolor=0x2288ff>;
+};
+
+
+// singles, framemovement
+struct dp_single_1x2 (const int frameCount)
+{
+    uint16_t total <fgcolor=0xff3355>;
+
+    if (!total)
+        return;
+
+    if (total < frameCount)
+    {
+        uint16_t frameIndices[total] <fgcolor=0xdd6644>;
+    }
+    
+    float16 singles[total] <fgcolor=0xff5522>;
+};
+
+struct dp_bone(const uint8_t boneFlags, const int frameCount)
+{
+    mstudio_rle_anim_t header <fgcolor=0xAA3366>;
+
+    local uint64_t localPos = FTell();
+
+    if (boneFlags & STUDIO_ANIM_ROT)
+    {
+        dp_rot_2x1 rot(frameCount);
+    }
+
+    if (boneFlags & STUDIO_ANIM_POS)
+    {
+        if (boneFlags & STUDIO_ANIM_UNK8)
+        {
+            dp_pos_1x1 pos(frameCount);
+        }
+        else
+        {
+            dp_pos_2x1 pos(frameCount);
+        }
+    }
+
+    if (boneFlags & STUDIO_ANIM_SCALE)
+    {
+        dp_scale scale(frameCount);
+    }
+};
+
+struct dp_anim(const uint64_t baseptr, const int animindex, const int frameCount)
+{
+    local const uint64_t animbase = (baseptr + animindex);
+
+#ifdef FEATURE_STATICSTRUCTS
+#ifndef RIG_PRESENT
+    // for anims without weightlist
+    BoneCountCheat(animbase);
+#endif
+#endif
+
+    FSeek(animbase);
+    struct {
+        nibble boneFlag[boneCount] <optimize=false>;
+    } boneFlags <fgcolor=0xaa8822>;
+
+    FSeek(animbase + ParseRLEAnimationOffset(boneCount));
+
+    local int boneIdx = 0;
+    local uint8_t flags = 0;
+    for (boneIdx = 0; boneIdx < boneCount; boneIdx++)
+    {
+        flags = boneFlags.boneFlag[boneIdx].bits;
+        if (!(flags & STUDIO_ANIM_DATA))
+            continue;
+
+        dp_bone bone(flags, frameCount);
+
+        FSeek(startof(bone) + bone.header.size);
+    };
+};
+
 // da ik
 struct ikerror_section(const int frameCount)
 {
@@ -351,6 +507,14 @@ struct anim_movement(mstudioanimdesc_t& animdesc)
     uint16_t sectionindices[sectionCount] <fgcolor=0x99ffcc>;
 #endif
 
+    if (animdesc.flags & STUDIO_DATAPOINTANIM)
+    {
+        dp_pos_2x2 positions(movement.sectionframes);   
+        dp_single_1x2 yaws(movement.sectionframes);
+
+        return;
+    }
+
     local int idx = 0;
     for (idx = 0; idx < sectionCount; idx++)
     {
@@ -362,32 +526,88 @@ struct anim_movement(mstudioanimdesc_t& animdesc)
     };
 };
 
-int GetMaxFrameForSection(const int numframes, const int sectionframes, const int section, const int numSections)
+int GetSectionLength_RLE(mstudioanimdesc_t&, const int section, const int numSections)
 {
+    // no sections use numframes
+    if (!animdesc.sectionframes)
+        return numframes;
+
+#ifdef FEATURE_STALL
+    const int sectionstallframes = animdesc.sectionstallframes;
+#else
+    const int sectionstallframes = 0;
+#endif
+
+    // stall section
+    if (sectionstallframes && section == 0)
+        return sectionstallframes;
+    
+    // final section always has one frame with static values
     if (section == (numSections - 1))
         return 1;
 
-    // the last full section will have less than sectionframes number of frames in most cases, doesn't seem to hurt stall style anims.
-    if (section == (numSections - 2))
-        return numframes - (section * sectionframes) - 1;
+    const bool useStall = sectionstallframes ? true : false;
 
-    return sectionframes;
+    // how many "real" sections here, we don't want to include stall in this
+    const int sectionbase = section - useStall;
+    const int frameoffset = sectionstallframes + (sectionbase * animdesc.sectionframes);
+    
+    const int remainingframes = animdesc.numframes - frameoffset - 1;
+    
+    if (remainingframes <= animdesc.sectionframes)
+	    return remainingframes;
+
+    return animdesc.sectionframes;
 }
 
-int GetMaxFrameForSectionStall(const int numframes, const int stallframes, const int sectionframes, const int section, const int numSections)
+const int GetSectionLength_DP(mstudioanimdesc_t& animdesc, const int section)
 {
-    if (section == (numSections - 1))
-        return 1;
+    // no sections use numframes
+    if (!animdesc.sectionframes)
+        return numframes;
 
-    // the last full section will have less than sectionframes number of frames in most cases, doesn't seem to hurt stall style anims.
-    // subtract one section for stall section    
-    if (section == (numSections - 2))
-        return numframes - stallframes - ((section - 1) * sectionframes) - 1;
+    // stall section
+    if (animdesc.sectionstallframes && section == 0)
+        return animdesc.sectionstallframes;
+    
+    // how many "real" sections here, we don't want to include stall in this
+    const int sectionbase = section - 1;
+    const int frameoffset = animdesc.sectionstallframes + (sectionbase * animdesc.sectionframes);
+    
+    const int remainingframes = animdesc.numframes - frameoffset;
+    
+    if (remainingframes <= animdesc.sectionframes)
+	    return remainingframes;
 
-    if (stallframes > 0 && section == 0)
-        return stallframes;
-        
-    return sectionframes;
+    return animdesc.sectionframes;
+}
+
+// these functions subtract one to make the number of frames the max index
+// if we don't do this, sections that are not full length will cause issues
+const int GetSectionCount_RLE(mstudioanimdesc_t& animdesc)
+{
+    local bool useStall = false;
+    local int sectionstallframes = 0;
+#ifdef FEATURE_STALL
+    if (animdesc.sectionstallframes)
+    {
+        useStall = true;
+        sectionstallframes = animdesc.sectionstallframes;
+    }
+#endif
+
+    const int sectionbase = (animdesc.numframes - sectionstallframes - 1) / animdesc.sectionframes;
+    const int sectionindex = sectionbase + 1 + useStall; // add the trailing section and stall section
+    return sectionindex + 1; // make this index a count
+}
+
+const int GetSectionCount_DP(mstudioanimdesc_t& animdesc)
+{
+    local bool useStall = animdesc.sectionstallframes ? true : false;
+
+    const int sectionbase = (animdesc.numframes - animdesc.sectionstallframes - 1) / animdesc.sectionframes;
+    const int sectionindex = sectionbase + useStall; // add the trailing section and stall section
+    return sectionindex + 1; // make this index a count
 }
 
 void ParseAnimdesc(const uint64_t baseptr, const int animindex)
@@ -398,18 +618,12 @@ void ParseAnimdesc(const uint64_t baseptr, const int animindex)
 
         local int j = 0;
 
-        if (!(animdesc.flags & STUDIO_HAS_ANIM))
-            return;
+        const bool isDataPoint = animdesc.flags & STUDIO_DATAPOINTANIM ? true : false;
 
-        if (animdesc.sectionframes > 0)
+        if ((animdesc.flags & STUDIO_HAS_ANIM) && animdesc.sectionframes > 0)
         {
             // this equation gets the max INDEX of the array, if we add one to this, we'll get the section count
-#ifdef FEATURE_STALL
-            local const int sectionCount = ((animdesc.numframes - animdesc.sectionstallframes - 1.0f) / animdesc.sectionframes) + 3;
-#else
-            local const int sectionCount = ((animdesc.numframes - 1.0f) / animdesc.sectionframes) + 2;
-#endif
-
+            local const int sectionCount = isDataPoint ? GetSectionCount_DP(animdesc) : GetSectionCount_RLE(animdesc);
             local int maxFrames = 0;
 
             FSeek(startof(animdesc) + GetOffset(animdesc.sectionindex));
@@ -428,21 +642,24 @@ void ParseAnimdesc(const uint64_t baseptr, const int animindex)
 #endif
 #endif
 
-#ifdef FEATURE_STALL
-                maxFrames = GetMaxFrameForSectionStall(animdesc.numframes, animdesc.sectionstallframes, animdesc.sectionframes, j, sectionCount);
-#else
-                maxFrames = GetMaxFrameForSection(animdesc.numframes, animdesc.sectionframes, j, sectionCount);
-#endif
+                maxFrames = isDataPoint ? GetSectionLength_DP(animdesc, j) : GetSectionLength_RLE(animdesc, j, sectionCount);
 
                 FSeek(startof(animdesc) + sections[j].animindex);
-                rle_anim section(startof(animdesc), sections[j].animindex, maxFrames);
+                if (isDataPoint)
+                    dp_anim section(startof(animdesc), sections[j].animindex, maxFrames);
+                else
+                    rle_anim section(startof(animdesc), sections[j].animindex, maxFrames);
             };
         }
 
-        if (animdesc.sectionframes == 0)
+        if ((animdesc.flags & STUDIO_HAS_ANIM) && animdesc.sectionframes == 0)
         {
             FSeek(startof(animdesc) + animdesc.animindex);
-            rle_anim animation(startof(animdesc), animdesc.animindex, animdesc.numframes - 1);
+            if (isDataPoint)
+                dp_anim animation(startof(animdesc), animdesc.animindex, animdesc.numframes);
+            else
+                rle_anim animation(startof(animdesc), animdesc.animindex, animdesc.numframes - 1);
+            
         }
 
         if(animdesc.numikrules && !(animdesc.ikruleindex == 3 || animdesc.ikruleindex == 5))

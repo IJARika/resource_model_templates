@@ -24,6 +24,8 @@ typedef unsigned int uint32_t;
 typedef __int64 int64_t;
 typedef unsigned __int64 uint64_t;
 
+typedef hfloat float16;
+
 // todo: Empty structure. 
 struct nibble
 {
@@ -74,9 +76,9 @@ struct Vector32
 
 struct Vector48
 {
-    hfloat x;
-    hfloat y;
-    hfloat z;
+    float16 x;
+    float16 y;
+    float16 z;
 };
 
 struct Vector64
@@ -146,18 +148,11 @@ struct matrix3x4_t
 		float m20; float m21; float m22; float m23; // r2
 };
 
-
-
 enum <int> boolean
 {
     False = 0,
     True = 1,
 };
-
-/*struct bool
-{
-    byte bool;
-};*/
 
 typedef byte bool;
 

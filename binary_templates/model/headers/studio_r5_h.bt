@@ -84,10 +84,12 @@ struct mstudiojigglebone_t
 //
 #define STUDIO_HAS_ANIM         0x20000
 #define STUDIO_FRAMEMOVEMENT    0x40000 // framemovements are only read if this flag is present
+#define STUDIO_DATAPOINTANIM    0x200000
 
-#define STUDIO_ANIM_POS 0x1 // bone has pos values
-#define STUDIO_ANIM_ROT 0x2 // bone has rot values
-#define STUDIO_ANIM_SCALE 0x4 // bone has scale values
+#define STUDIO_ANIM_POS     0x1 // bone has pos values
+#define STUDIO_ANIM_ROT     0x2 // bone has rot values
+#define STUDIO_ANIM_SCALE   0x4 // bone has scale values
+#define STUDIO_ANIM_UNK8    0x8 // special position used for virtual models
 #define STUDIO_ANIM_DATA (STUDIO_ANIM_POS | STUDIO_ANIM_ROT | STUDIO_ANIM_SCALE) // bone has animation data
 
 #define STUDIO_ANIM_ANIMSCALE 0x01 // mstudioanim_valueptr_t
@@ -139,6 +141,35 @@ uint64_t GetAnimValueOffset(mstudioanimvalue_t& panimvalue)
 
     return (s_AnimSeekLUT[3 * valid] + (int)((int)(s_AnimSeekLUT[3 * valid + 1] + total * s_AnimSeekLUT[3 * valid + 2]) / 16));
 }
+
+// datapoint animation
+struct AxisFixup_t
+{
+    int8_t adjustment[3]; // per indice
+};
+
+struct AnimQuat32
+{
+    // saved components
+    uint32_t value0 : 7;
+    uint32_t value1 : 7;
+    uint32_t value2 : 7;
+
+    uint32_t scaleFactor : 3; // used to set two different scaling floats for unpacking components
+    uint32_t droppedAxis : 2; // axis/indice of the dropped component
+    
+    uint32_t numInterpFrames : 6; // frame gap between this and the next quat (?)
+};
+
+struct AnimPos64
+{
+    // saved components
+    int16_t values[3]; // x, y, z
+
+    int16_t scaleFactor : 9;
+    
+    int16_t numInterpFrames : 7; // frame gap between this and the next quat (?)
+};
 
 struct mstudioiklink_t
 {

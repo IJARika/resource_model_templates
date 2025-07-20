@@ -44,10 +44,10 @@ FSeek(startof(hdr) + hdr.boneindex);
 mstudiobone_t bones[boneCount] <fgcolor=cLtGreen, read=Str("name %s; parent %i;", ReadString(startof(this) + this.sznameindex), this.parent)>;
 #else
 FSeek(startof(hdr) + GetOffset(hdr.boneHdrOffset));
-mstudiobonehdr_t bones[boneCount] <fgcolor=cLtGreen, read=Str("name %s; parent %i;", ReadString(startof(this) + GetOffset(this.sznameindex)), this.parent)>;
+mstudiobonehdr_t bones[boneCount] <fgcolor=cLtGreen, read=Str("name %s;", ReadString(startof(this) + GetOffset(this.sznameindex)))>;
 
 FSeek(startof(hdr) + GetOffset(hdr.boneDataOffset));
-mstudiobonedata_t data_bones[boneCount] <fgcolor=cLtGreen>;
+mstudiobonedata_t data_bones[boneCount] <fgcolor=cLtGreen, read=Str("parent %i;", this.parent)>;
 #endif
 
 if(hdr.procBoneCount)
@@ -243,7 +243,7 @@ struct bodypart_t
     for (modelIdx = 0; modelIdx < bodypart.nummodels; modelIdx++)
     {
         FSeek(startof(bodypart) + GetOffset(bodypart.modelindex) + (sizeof(mstudiomodel_t) * modelIdx));
-        model_t models <read=Str("%s with %i meshes", this.model.name, this.meshCount)>;
+        model_t models <read=Str("%s with %i meshes", exists(this.model.name) ? this.model.name : "", this.meshCount)>;
     }
 };
 
@@ -421,23 +421,36 @@ struct linearbonedata_t
 {
     mstudiolinearbone_t linearbone <bgcolor=cGreen>;
 
-    FSeek(startof(linearbone) + linearbone.flagsindex);
+    FSeek(startof(linearbone) + GetOffset(linearbone.flagsindex));
     int flags[linearbone.numbones] <fgcolor=cLtGreen>;
 
-    FSeek(startof(linearbone) + linearbone.parentindex);
+    FSeek(startof(linearbone) + GetOffset(linearbone.parentindex));
+#ifdef FEATURE_REFACTOR
+    short parents[linearbone.numbones] <bgcolor=cLtGreen>;
+#else
     int parents[linearbone.numbones] <bgcolor=cLtGreen>;
+#endif
 
-    FSeek(startof(linearbone) + linearbone.posindex);
+    FSeek(startof(linearbone) + GetOffset(linearbone.posindex));
     Vector positions[linearbone.numbones] <fgcolor=cLtGreen>;
 
-    FSeek(startof(linearbone) + linearbone.quatindex);
+    FSeek(startof(linearbone) + GetOffset(linearbone.quatindex));
     Quaternion quats[linearbone.numbones] <bgcolor=cLtGreen>;
 
-    FSeek(startof(linearbone) + linearbone.rotindex);
+    FSeek(startof(linearbone) + GetOffset(linearbone.rotindex));
     RadianEuler rotations[linearbone.numbones] <fgcolor=cLtGreen>;
 
-    FSeek(startof(linearbone) + linearbone.posetoboneindex);
+    FSeek(startof(linearbone) + GetOffset(linearbone.posetoboneindex));
     matrix3x4_t poseToBones[linearbone.numbones] <bgcolor=cLtGreen>;
+
+#ifdef FEATURE_FORCELINEARBONE
+    
+	FSeek(startof(linearbone) + GetOffset(linearbone.qalignmentindex));
+    Quaternion qAlignments[linearbone.numbones] <fgcolor=cLtGreen>;
+
+    FSeek(startof(linearbone) + GetOffset(linearbone.scaleindex));
+    Vector scales[linearbone.numbones] <bgcolor=cLtGreen>;
+#endif
 };
 
 if (exists(hdr.linearboneindex) && hdr.linearboneindex)
@@ -520,7 +533,6 @@ void ParseNodeType(int64_t pNodeStart, int64_t pLeafStart, int nodeIndex, int no
             dbvhleaf_poly_t polyhdr<bgcolor=cDkRed>;
             dbvhquad_t quads[polyhdr.polyCount + 1] <bgcolor=cLtRed>;
         } prim_quad;
-        Assert(0);
         break;
     }
     case BVH4_LEAF_PRIM_QUAD_PACKED:
@@ -583,30 +595,45 @@ struct BVHHeader_t(const int64_t bvhPtr, const int boneId)
     local const int bone = boneId;
 };
 
+#ifndef FEATURE_REFACTOR
+const bool s_CollIdxType = sizeof(bones[0].collisionIndex) == sizeof(int);
+#endif
+const int CollIdxFromBone(const int bone)
+{
+#ifdef FEATURE_REFACTOR
+    const uint8_t collIdx = data_bones[bone].collisionIndex;
+
+    if (collIdx == 0xff)
+        return -1;
+#else
+    const int collIdx = bones[bone].collisionIndex;
+
+    if ((s_CollIdxType && collIdx < 0) || (!s_CollIdxType && collIdx == 0xff))
+        return -1;
+#endif
+
+    return collIdx;
+}
+
 struct BVHColl_t
 {
     mstudiocollmodel_t bvhhdr <bgcolor=cDkBlue>;
 
-    // used for getting group names
-    local int boneIndices[boneCount];
-    local int boneCollIndex = -1;
-#ifdef FEATURE_REFACTOR
-    local const bool isSignedIdx = false; 
-#else
-    local const bool isSignedIdx = sizeof(bones[0].collisionIndex) == sizeof(int); 
-#endif
+    // used for getting group names 
+    // these init as zero, so we don't have to go back and set them if we lack indices
+    local int boneIndices[bvhhdr.headerCount]; 
+    local bool hasParents = false;
+    local int collIdx = -1;
+
     for (i = 0; i < boneCount; i++)
     {
-#ifdef FEATURE_REFACTOR
-        boneCollIndex = data_bones[i].collisionIndex;
-#else
-        boneCollIndex = bones[i].collisionIndex;
-#endif
+        collIdx = CollIdxFromBone(i);
 
-        if ((isSignedIdx && boneCollIndex < 0) || (!isSignedIdx && boneCollIndex == 0xff))
+        if (collIdx == -1)
             continue;
 
-        boneIndices[boneCollIndex] = i;
+        hasParents = true;
+        boneIndices[collIdx] = i;
     }
 
     local const int64_t bvhPtr = startof(bvhhdr);
@@ -665,8 +692,9 @@ if (hdr.groupHeaderCount)
     studio_hw_groupdata_t hw_groups[hdr.groupHeaderCount] <fgcolor=0x229944>;
 }
 
-
-if(exists(hdr.meshOffset) && hdr.meshCount)
+// if the offset is 0, no data stored (v14)(mdl/signs/olympus_ad_sign_02_mu2.rmdl)'
+// my guess is they finally cut this data here
+if(exists(hdr.meshOffset) && hdr.meshCount && hdr.meshOffset)
 {
     FSeek(startof(hdr.meshOffset) + hdr.meshOffset);
     UnkVgData_t hw_meshes[hdr.meshCount] <fgcolor=0x559922>;

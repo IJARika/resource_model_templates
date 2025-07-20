@@ -35,6 +35,7 @@ struct mstudiobonehdr_t
 	uint16_t sznameindex;
 };
 
+#ifndef FEATURE_FORCELINEARBONE
 struct mstudiobonedata_t
 {
 	matrix3x4_t poseToBone;
@@ -75,6 +76,45 @@ struct mstudiolinearbone_t
 
 	uint16_t posetoboneindex;
 };
+#else
+struct mstudiobonedata_t
+{
+	short parent; // parent bone;
+
+	uint16_t unk_76; // gotta be used because there's to 8 bit vars that could've fit here, still may be packing. previously 'unk1'
+
+	int flags;
+
+	uint8_t collisionIndex; // index into sections of collision, phy, bvh, etc. needs confirming
+
+	uint8_t proctype;
+	uint16_t procindex; // procedural rule
+
+    int unk_C; // chance this is alignment for 16 bytes
+};
+
+struct mstudiolinearbone_t
+{
+	// they cut pos and rot scale, understandable since posscale was never used it tf|2 and they do anims different in apex
+	uint16_t numbones;
+
+	uint16_t flagsindex;
+
+	uint16_t parentindex;
+
+	uint16_t posindex;
+
+	uint16_t quatindex;
+
+	uint16_t rotindex;
+
+	uint16_t posetoboneindex;
+
+	uint16_t qalignmentindex;
+
+	uint16_t scaleindex;
+};
+#endif
 
 struct mstudioattachment_t
 {
