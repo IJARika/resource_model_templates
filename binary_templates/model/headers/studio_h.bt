@@ -505,4 +505,17 @@ struct mstudioeyeball_t
 };
 #endif
 
+
+//
+// misc
+//
+
+// todo bspflags.h
+local FlagArray_t contentsFlags(4, "CONTENTS_EMPTY");
+contentsFlags.strings[0].value = "CONTENTS_SOLID"; 
+contentsFlags.strings[1].value = "CONTENTS_WINDOW"; 
+contentsFlags.strings[2].value = "CONTENTS_AUX";
+contentsFlags.strings[3].value = "CONTENTS_GRATE";
+
+
 #endif

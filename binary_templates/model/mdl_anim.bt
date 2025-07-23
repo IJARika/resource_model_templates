@@ -68,18 +68,20 @@ struct rle_bone(const int frameCount)
 #ifdef FEATURE_STATIC_RLE_SIZE
     local uint64_t localPos = startof(header) + 8;
     FSeek(localPos);
-    if (header.flags & STUDIO_ANIM_RAWROT)
+    if (!(header.flags & STUDIO_ANIM_NOROT))
     {
-        Quaternion64 rot <fgcolor=cLtRed>;
-
-        localPos += 8;
+        if (header.flags & STUDIO_ANIM_RAWROT)
+        {
+            Quaternion64 rot <fgcolor=cLtRed>;
+        }
+        else
+        {
+            rle_valueptr pRot(frameCount) <fgcolor=cLtRed>;
+        }
     }
-    else
-    {
-        rle_valueptr pRot(frameCount) <fgcolor=cLtRed>;
 
-        localPos += 8;
-    }
+    // move past rotation
+    localPos += 8;
 
     FSeek(localPos);
     if (header.flags & STUDIO_ANIM_RAWPOS)

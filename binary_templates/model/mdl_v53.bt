@@ -110,7 +110,7 @@ struct studiohdr_t
 	int localikautoplaylockindex;
 
 	float mass;
-	int contents;
+	int contents <read=ReadFlags(this, contentsFlags)>;
 
 	// external animations, models, etc.
 	int numincludemodels;
