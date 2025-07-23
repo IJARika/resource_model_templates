@@ -6,7 +6,7 @@ Located int the 'binary_templates' folder.
 
 Studio Model:
   - mdl (48, 49, 52, 53, and 63)
-  - rmdl (8, 9, 10, 11, 12(and subversions), 13, 13.1, 14, 14.1, 15, 16, 17, and 18)
+  - rmdl (8, 9, 10, 11, 12(and subversions), 13, 13.1, 14, 14.1, 15, 16, 17, 18, and 19)
   - rrig (see above)
   - rseq (7, 7.1, 10, 11, 12)
   - phys (valve and respawn)

@@ -573,17 +573,31 @@ void CreateBVHNodes(int64_t pNodeStart, int64_t pLeafStart, int nodeIndex)
     BVHNodeGenerated_t node(pNodeStart, pLeafStart, nodeIndex);
 }
 
+void CreateBVHSprops(const int64_t bvhPtr, mstudiocollheader_t& collhdr)
+{
+    if (!collhdr.surfacePropArrayCount)
+        return;
+
+    FSeek(bvhPtr + collhdr.surfacePropDataIndex);
+    
+    if (collhdr.surfacePropCount == 1)
+    {
+        dsurfacepropertydata_t surfaceprop_data[collhdr.surfacePropArrayCount] <fgcolor=cYellow>;
+        return;
+    }
+
+    struct {
+        dsurfacepropertydata_t surfaceprop_data[collhdr.surfacePropArrayCount] <fgcolor=cYellow>;
+    } surfaceprops[collhdr.surfacePropCount];
+
+}
+
 struct BVHHeader_t(const int64_t bvhPtr, const int boneId)
 {
     mstudiocollheader_t collhdr <bgcolor=cPurple>;
 
 #ifdef FEATURE_BVH_SURFACEPROPS
-    if (collhdr.surfacePropArrayCount > 0)
-    {        
-        FSeek(bvhPtr + collhdr.surfacePropDataIndex);
-        dsurfacepropertydata_t surfaceprops_data[collhdr.surfacePropArrayCount] <fgcolor=cYellow>;
-        Assert(collhdr.surfacePropCount == 1); // this might cause issues, what if the array count is per surface prop?
-    }
+    CreateBVHSprops(bvhPtr, collhdr);
 #endif
 
     FSeek(bvhPtr + collhdr.vertIndex);
@@ -658,8 +672,9 @@ struct BVHColl_t
     char contentMasks[bvhhdr.surfaceNamesIndex - bvhhdr.contentMasksIndex] <bgcolor=cLtRed>;
 
     // these always seem to be nulled out
+    // only one stored in file ? perhaps offset to string array when present
     FSeek(startof(bvhhdr) + bvhhdr.surfaceNamesIndex);
-    int surfaceNameOffset[surfacePropCount] <fgcolor=cLtYellow>;
+    int surfaceNameOffset[1] <fgcolor=cLtYellow>;
     Assert(surfaceNameOffset[0] == 0);
 };
 
@@ -700,10 +715,9 @@ if(exists(hdr.meshOffset) && hdr.meshCount && hdr.meshOffset)
     UnkVgData_t hw_meshes[hdr.meshCount] <fgcolor=0x559922>;
 }
 
-
 if(hdr.boneStateCount > 0 && hdr.boneStateOffset > 0)
 {
     FSeek(startof(hdr.boneStateOffset) + GetOffset(hdr.boneStateOffset));
-    ubyte hw_boneStates[hdr.boneStateCount] <read=ReadString(startof(bones[this]) + bones[this].sznameindex), fgcolor=cDkGreen>;
+    uint8_t hw_boneStates[hdr.boneStateCount] <read=ReadString(startof(bones[this]) + bones[this].sznameindex), fgcolor=cDkGreen>;
 }
 #endif
