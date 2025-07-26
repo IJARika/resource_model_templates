@@ -20,7 +20,7 @@ struct mstudioseqdesc_t
 
 	uint16_t szactivitynameindex;
 
-	int flags; // looping/non-looping flags
+	int flags <read=ReadFlags(this, flags_seqDesc_r5)>; // looping/non-looping flags
 
 	uint16_t activity; // initialized at loadtime to game DLL values
 	uint16_t actweight;
@@ -85,7 +85,7 @@ struct mstudioevent_t
 {
 	float cycle;
 	int	event;
-	int type; // no flag if using 'event' var with event id
+	int type <read=ReadFlags(this, flags_studioEvent_all)>; // no flag if using 'event' var with event id
 
 	int unk;
 
@@ -180,7 +180,7 @@ struct mstudioframemovement_t
 struct mstudioanimdesc_t
 {
 	float fps; // frames per second	
-	int flags; // looping/non-looping flags
+	int flags <read=ReadFlags(this, flags_animDesc_r5)>; // looping/non-looping flags
 
 	int numframes;
 

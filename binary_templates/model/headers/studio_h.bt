@@ -292,6 +292,9 @@ struct mstudioikrulezeroframe_t
 };
 #endif
 
+local FlagArray_t flags_studioEvent_all(32, "NONE");
+InitFlagEntry(flags_studioEvent_all.strings[10], "NEW_EVENT_STYLE");
+
 
 //
 // meshes

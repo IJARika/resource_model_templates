@@ -22,7 +22,7 @@ struct mstudioseqdesc_t
 
 	int szactivitynameindex;
 
-	int flags; // looping/non-looping flags
+	int flags <read=ReadFlags(this, flags_seqDesc_r5)>; // looping/non-looping flags
 
 	int activity; // initialized at loadtime to game DLL values
 	int actweight;
@@ -96,7 +96,7 @@ struct mstudioevent_t
 {
 	float cycle;
 	int	event;
-	int type; // this will be 0 if old style I'd imagine
+	int type <read=ReadFlags(this, flags_studioEvent_all)>; // no flag if using 'event' var with event id // this will be 0 if old style I'd imagine
 
 	int unk; // 2, 4, animseq/weapons/crypto_heirloom/ptpov_sword_crypto/draw.rseq
 
@@ -195,7 +195,7 @@ struct mstudioanimdesc_t
 	int sznameindex;
 
 	float fps; // frames per second	
-	int flags; // looping/non-looping flags
+	int flags <read=ReadFlags(this, flags_animDesc_r5)>; // looping/non-looping flags
 
 	int numframes;
 

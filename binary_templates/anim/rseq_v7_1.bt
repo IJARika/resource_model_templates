@@ -12,6 +12,8 @@
 //------------------------------------------------
 
 #include "../source_math.bt"
+#include "../model/headers/studio_r5_h.bt"
+#include "../model/headers/studio_h.bt"
 #include "./headers/rseq_v7_1_h.bt"
 #include "./rseq.bt"
 

@@ -179,22 +179,36 @@ enum <uint8_t> MaterialShaderType_t
 // silly guy
 local int64_t i = 0;
 
+struct FlagEntry_t
+{
+    local string value;
+    local bool valid = false;
+};
+
+void InitFlagEntry(FlagEntry_t& entry, const string value)
+{
+    entry.value = value;
+    entry.valid = true;
+}
+
 struct FlagArray_t(const int size, const string noneString)
 {
     local const int length = size;
     local const string none = noneString;
 
-    struct {
-        local string value;
-    } strings[length] <optimize=false>;
+    FlagEntry_t strings[length] <optimize=false>;
 };
 
 string ReadFlags(const uint64_t flags, FlagArray_t& flagList)
 {
-    if (!flags)
-        return flagList.none;
+    local string flagString = Str("(0x%lx): ", flags);
 
-    local string flagString = "";
+    if (!flags)
+    {
+        flagString += flagList.none;
+        return flagString;
+    }
+
     local bool hasFlags = false;
     for (i = 0; i < flagList.length; i++)
     {
@@ -204,7 +218,15 @@ string ReadFlags(const uint64_t flags, FlagArray_t& flagList)
         if (hasFlags)
             flagString += " | ";
 
-        flagString += flagList.strings[i].value;
+        if (flagList.strings[i].valid)
+        {
+            flagString += flagList.strings[i].value;
+        }
+        else
+        {
+            flagString += Str("unk_%lx", 1 << i);
+        }
+        
         hasFlags = true;
     }
 

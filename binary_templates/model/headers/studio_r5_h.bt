@@ -86,6 +86,53 @@ struct mstudiojigglebone_t
 #define STUDIO_FRAMEMOVEMENT    0x40000 // framemovements are only read if this flag is present
 #define STUDIO_DATAPOINTANIM    0x200000
 
+local FlagArray_t flags_animDesc_r5(32, "NONE");
+InitFlagEntry(flags_animDesc_r5.strings[0], "STUDIO_LOOPING");
+InitFlagEntry(flags_animDesc_r5.strings[1], "STUDIO_SNAP");
+InitFlagEntry(flags_animDesc_r5.strings[2], "STUDIO_DELTA");
+InitFlagEntry(flags_animDesc_r5.strings[3], "STUDIO_AUTOPLAY");
+InitFlagEntry(flags_animDesc_r5.strings[4], "STUDIO_POST");
+InitFlagEntry(flags_animDesc_r5.strings[5], "STUDIO_ALLZEROS");
+InitFlagEntry(flags_animDesc_r5.strings[6], "STUDIO_ANIM_UNK40");
+InitFlagEntry(flags_animDesc_r5.strings[7], "STUDIO_CYCLEPOSE");
+InitFlagEntry(flags_animDesc_r5.strings[8], "STUDIO_REALTIME");
+InitFlagEntry(flags_animDesc_r5.strings[9], "STUDIO_LOCAL");
+InitFlagEntry(flags_animDesc_r5.strings[10], "STUDIO_HIDDEN");
+InitFlagEntry(flags_animDesc_r5.strings[11], "STUDIO_OVERRIDE");
+InitFlagEntry(flags_animDesc_r5.strings[12], "STUDIO_ACTIVITY");
+InitFlagEntry(flags_animDesc_r5.strings[13], "STUDIO_EVENT");
+InitFlagEntry(flags_animDesc_r5.strings[14], "STUDIO_WORLD");
+InitFlagEntry(flags_animDesc_r5.strings[15], "STUDIO_NOFORCELOOP");
+InitFlagEntry(flags_animDesc_r5.strings[16], "STUDIO_EVENT_CLIENT");
+InitFlagEntry(flags_animDesc_r5.strings[17], "STUDIO_HAS_ANIM");
+InitFlagEntry(flags_animDesc_r5.strings[18], "STUDIO_FRAMEMOVEMENT");
+InitFlagEntry(flags_animDesc_r5.strings[19], "STUDIO_SINGLE_FRAME");
+// mia
+InitFlagEntry(flags_animDesc_r5.strings[21], "STUDIO_DATAPOINTANIM");
+
+// animdesc flags but 0x20000 is different
+local FlagArray_t flags_seqDesc_r5(32, "NONE");
+InitFlagEntry(flags_seqDesc_r5.strings[0], "STUDIO_LOOPING");
+InitFlagEntry(flags_seqDesc_r5.strings[1], "STUDIO_SNAP");
+InitFlagEntry(flags_seqDesc_r5.strings[2], "STUDIO_DELTA");
+InitFlagEntry(flags_seqDesc_r5.strings[3], "STUDIO_AUTOPLAY");
+InitFlagEntry(flags_seqDesc_r5.strings[4], "STUDIO_POST");
+InitFlagEntry(flags_seqDesc_r5.strings[5], "STUDIO_ALLZEROS");
+InitFlagEntry(flags_seqDesc_r5.strings[6], "STUDIO_ANIM_UNK40");
+InitFlagEntry(flags_seqDesc_r5.strings[7], "STUDIO_CYCLEPOSE");
+InitFlagEntry(flags_seqDesc_r5.strings[8], "STUDIO_REALTIME");
+InitFlagEntry(flags_seqDesc_r5.strings[9], "STUDIO_LOCAL");
+InitFlagEntry(flags_seqDesc_r5.strings[10], "STUDIO_HIDDEN");
+InitFlagEntry(flags_seqDesc_r5.strings[11], "STUDIO_OVERRIDE");
+InitFlagEntry(flags_seqDesc_r5.strings[12], "STUDIO_ACTIVITY");
+InitFlagEntry(flags_seqDesc_r5.strings[13], "STUDIO_EVENT");
+InitFlagEntry(flags_seqDesc_r5.strings[14], "STUDIO_WORLD");
+InitFlagEntry(flags_seqDesc_r5.strings[15], "STUDIO_NOFORCELOOP");
+InitFlagEntry(flags_seqDesc_r5.strings[16], "STUDIO_EVENT_CLIENT");
+InitFlagEntry(flags_seqDesc_r5.strings[17], "STUDIO_HAS_SCALE");
+InitFlagEntry(flags_seqDesc_r5.strings[18], "STUDIO_FRAMEMOVEMENT");
+InitFlagEntry(flags_seqDesc_r5.strings[19], "STUDIO_SINGLE_FRAME");
+
 #define STUDIO_ANIM_POS     0x1 // bone has pos values
 #define STUDIO_ANIM_ROT     0x2 // bone has rot values
 #define STUDIO_ANIM_SCALE   0x4 // bone has scale values
@@ -96,20 +143,36 @@ struct mstudiojigglebone_t
 #define STUDIO_ANIM_ANIMROT 0x02 // mstudioanim_valueptr_t
 #define STUDIO_ANIM_ANIMPOS 0x04 // mstudioanim_valueptr_t
 
+local FlagArray_t flags_animBone_r5(4, "NONE");
+InitFlagEntry(flags_animBone_r5.strings[0], "STUDIO_ANIM_POS"); 
+InitFlagEntry(flags_animBone_r5.strings[1], "STUDIO_ANIM_ROT"); 
+InitFlagEntry(flags_animBone_r5.strings[2], "STUDIO_ANIM_SCALE");
+InitFlagEntry(flags_animBone_r5.strings[3], "STUDIO_ANIM_UNK8");
+
+local FlagArray_t flags_rleHeader_r5(3, "");
+InitFlagEntry(flags_rleHeader_r5.strings[0], "STUDIO_ANIM_ANIMSCALE"); 
+InitFlagEntry(flags_rleHeader_r5.strings[1], "STUDIO_ANIM_ANIMROT"); 
+InitFlagEntry(flags_rleHeader_r5.strings[2], "STUDIO_ANIM_ANIMPOS");
+
 struct mstudio_rle_anim_t
 {
 	short size : 13; // total size of all animation data, not next offset because even the last one has it
-	short flags : 3;
+	short flags : 3 <read=ReadFlags(this, flags_rleHeader_r5)>;
 };
 
 #define STUDIO_ANIMPTR_Z 0x01
 #define STUDIO_ANIMPTR_Y 0x02
 #define STUDIO_ANIMPTR_X 0x04
 
+local FlagArray_t flags_valuePtr_r5(3, "NONE");
+InitFlagEntry(flags_valuePtr_r5.strings[0], "STUDIO_ANIMPTR_Z"); 
+InitFlagEntry(flags_valuePtr_r5.strings[1], "STUDIO_ANIMPTR_Y"); 
+InitFlagEntry(flags_valuePtr_r5.strings[2], "STUDIO_ANIMPTR_X");
+
 struct mstudioanim_valueptr_t
 {
     short offset : 13;
-    short flags : 3;
+    short flags : 3 <read=ReadFlags(this, flags_valuePtr_r5)>;
     uint8_t axisIdx1; // these two are definitely unsigned
     uint8_t axisIdx2;
  };
