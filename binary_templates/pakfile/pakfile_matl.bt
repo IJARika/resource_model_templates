@@ -334,6 +334,65 @@ struct MaterialAssetHeader_v23_1_t
     PagePtr_t cpuDataPtr;
 };
 
+struct MaterialAssetHeader_v23_2_t
+{
+	uint64_t unk_0; // same as previous version (as of v23), does not seem to be vtftableReserved (contains data)
+
+	uint64_t snapshotMaterial; // msnp guid
+
+	uint64_t guid; // guid of this material asset
+
+	PagePtr_t name; // pointer to partial asset path
+	PagePtr_t surfaceProp; // pointer to surfaceprop (as defined in surfaceproperties.rson)
+	PagePtr_t surfaceProp2; // pointer to surfaceprop2 
+
+	uint64_t depthShadowMaterial;
+	uint64_t depthPrepassMaterial;
+	uint64_t depthVSMMaterial;
+	uint64_t depthShadowTightMaterial;
+	uint64_t colpassMaterial;
+
+	uint64_t shaderSet; // guid of the shaderset asset that this material uses
+
+	PagePtr_t textureHandles; // ptr to array of texture guids
+	PagePtr_t streamingTextureHandles; // ptr to array of streamable texture guids (empty at build time)
+
+	short numStreamingTextureHandles; // number of textures with streamed mip levels.
+	short width;
+	short height;
+	short depth;
+
+	// array of indices into sampler states array. must be set properly to have accurate texture tiling
+	// used in CShaderGlue::SetupShader (1403B3C60)
+	char samplers[4];// = 0x1D0300;
+
+	uint32_t unk_7C;
+
+	uint32_t unk_80;// = 0x1F5A92BD; // REQUIRED but why?
+
+
+	uint32_t glueFlags;
+	uint32_t glueFlags2;
+
+	char unk_8C[16];
+
+	uint16_t numAnimationFrames; // used in CMaterialGlue::GetNumAnimationFrames (0x1403B4250), which is called from GetSpriteInfo @ 0x1402561FC
+	MaterialShaderType_t materialType;
+	uint8_t uberBufferFlags; // used for unksections loading in UpdateMaterialAsset
+
+	int unk_A0; // unk_CC?
+
+    float unk_A4; // unk_E8?
+
+	uint64_t textureAnimation;
+
+	char unk_B0[8]; // unk_F0 ?
+
+    PagePtr_t cpuDataPtr;
+
+    uint8_t unk_C8[8];
+};
+
 void HandleMaterial(PakAsset_t& asset, uint64_t pageoffsets[])
 {
     PageSeek(asset.headPagePtr);
@@ -361,14 +420,26 @@ void HandleMaterial(PakAsset_t& asset, uint64_t pageoffsets[])
     }
     case 22:
     case 23:
-    {    
-        if (asset.headerStructSize == 192)
+    {   
+        switch (asset.headerStructSize)
+        {
+        case sizeof(MaterialAssetHeader_v22_t):
+        {
+            MaterialAssetHeader_v22_t hdr;
+            break;
+        }
+        case sizeof(MaterialAssetHeader_v23_1_t):
         {
             MaterialAssetHeader_v23_1_t hdr;
             break;
         }
+        case sizeof(MaterialAssetHeader_v23_2_t):
+        {
+            MaterialAssetHeader_v23_2_t hdr;
+            break;
+        }
+        };
 
-        MaterialAssetHeader_v22_t hdr;
         break;
     }
     };

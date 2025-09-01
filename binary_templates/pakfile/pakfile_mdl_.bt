@@ -198,6 +198,7 @@ void HandleModel(PakAsset_t& asset, uint64_t pageoffsets[])
     case 16:
     case 17:
     case 18:
+    case 19:
     {
         ModelAssetHeader_v16_t hdr;
         break;
