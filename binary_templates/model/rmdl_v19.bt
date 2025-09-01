@@ -31,7 +31,7 @@
 // headers
 struct studiohdr_t
 {
-	int flags;
+	int flags <read=ReadFlags(this, flags_studioHdr_r5)>;
     int checksum; // unsure if this is still checksum, there isn't any other files that have it still
     uint16_t sznameindex; // No longer stored in string block, uses string in header.
     char name[33]; // The internal name of the model, padding with null chars. last byte always null
@@ -40,7 +40,7 @@ struct studiohdr_t
     
     float mass;
     
-    int contents;
+	int contents <read=ReadFlags(this, flags_contents_all)>;
     
     uint16_t hitboxsetindex;
     uint8_t numhitboxsets;

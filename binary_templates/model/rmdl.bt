@@ -422,7 +422,7 @@ struct linearbonedata_t
     mstudiolinearbone_t linearbone <bgcolor=cGreen>;
 
     FSeek(startof(linearbone) + GetOffset(linearbone.flagsindex));
-    int flags[linearbone.numbones] <fgcolor=cLtGreen>;
+    int flags[linearbone.numbones] <fgcolor=cLtGreen, read=ReadFlags(this, flags_bone_all)>;
 
     FSeek(startof(linearbone) + GetOffset(linearbone.parentindex));
 #ifdef FEATURE_REFACTOR

@@ -23,7 +23,7 @@
 
 struct mstudiobonehdr_t
 {
-	int contents; // See BSPFlags.h for the contents flags
+	int contents <read=ReadFlags(this, flags_contents_all)>; // See BSPFlags.h for the contents flags
 
 	uint8_t unk_4;
 
@@ -51,7 +51,7 @@ struct mstudiobonedata_t
 
 	uint16_t unk_76; // gotta be used because there's to 8 bit vars that could've fit here, still may be packing. previously 'unk1'
 
-	int flags;
+	int flags <read=ReadFlags(this, flags_bone_all)>;
 
 	uint8_t collisionIndex; // index into sections of collision, phy, bvh, etc. needs confirming
 
@@ -83,7 +83,7 @@ struct mstudiobonedata_t
 
 	uint16_t unk_76; // gotta be used because there's to 8 bit vars that could've fit here, still may be packing. previously 'unk1'
 
-	int flags;
+	int flags <read=ReadFlags(this, flags_bone_all)>;
 
 	uint8_t collisionIndex; // index into sections of collision, phy, bvh, etc. needs confirming
 

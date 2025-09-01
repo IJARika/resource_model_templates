@@ -43,7 +43,7 @@ struct studiohdr_t
 	Vector view_bbmin;		// clipping bounding box
 	Vector view_bbmax;
 
-	int flags;
+	int flags <read=ReadFlags(this, flags_studioHdr_r5)>;
 
 	int numbones; // bones
 	int boneindex;
@@ -120,7 +120,7 @@ struct studiohdr_t
 	int localikautoplaylockindex;
 
 	float mass;
-	int contents;
+	int contents <read=ReadFlags(this, flags_contents_all)>;
 
 	// unused for packed models
 	// technically still functional though I am unsure why you'd want to use it
@@ -246,14 +246,14 @@ struct mstudiobone_t
 	matrix3x4_t poseToBone;
 	Quaternion qAlignment;
 
-	int flags;
+	int flags <read=ReadFlags(this, flags_bone_all)>;
 	int proctype;
 	int procindex; // procedural rule offset
 	int physicsbone; // index into physically simulated bone
 	// from what I can tell this is the section that is parented to this bone, and if this bone is not the parent of any sections, it goes up the bone chain to the nearest bone that does and uses that section index
 	int surfacepropidx; // index into string tablefor property name
 
-	int contents; // See BSPFlags.h for the contents flags
+	int contents <read=ReadFlags(this, flags_contents_all)>; // See BSPFlags.h for the contents flags
 
 	int surfacepropLookup; // this index must be cached by the loader, not saved in the file
 

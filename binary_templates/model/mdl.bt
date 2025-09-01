@@ -422,7 +422,7 @@ if (hdr.keyvaluesize)
 #ifdef FEATURE_HDR2
 if (exists(hdr2.numsrcbonetransform) && hdr2.numsrcbonetransform)
 {
-    FSeek(startof(hdr2) + hdr2.srcbonetransformindex);
+    FSeek(startof(hdr) + hdr2.srcbonetransformindex);
     mstudiosrcbonetransform_t srcbonetransform[hdr2.numsrcbonetransform] <bgcolor=cDkGreen, read=ReadString(startof(this) + this.sznameindex)>;
 }
 #else
@@ -438,7 +438,7 @@ struct linearbonedata_t
     mstudiolinearbone_t linearbone <bgcolor=cGreen>;
 
     FSeek(startof(linearbone) + linearbone.flagsindex);
-    int flags[linearbone.numbones] <fgcolor=cLtGreen>;
+    int flags[linearbone.numbones] <fgcolor=cLtGreen, read=ReadFlags(this, flags_bone_all)>;
 
     FSeek(startof(linearbone) + linearbone.parentindex);
     int parents[linearbone.numbones] <bgcolor=cLtGreen>;

@@ -27,6 +27,35 @@
 #define BONE_HAS_SAVEFRAME_ROT32	0x00800000	// Quaternion32
 #define BONE_HAS_SAVEFRAME (BONE_HAS_SAVEFRAME_POS | BONE_HAS_SAVEFRAME_ROT64 | BONE_HAS_SAVEFRAME_ROT32)
 
+local FlagArray_t flags_bone_all(32, "NONE");
+InitFlagEntry(flags_bone_all, "BONE_PHYSICALLY_SIMULATED",  0x1);
+InitFlagEntry(flags_bone_all, "BONE_PHYSICS_PROCEDURAL",    0x2);
+InitFlagEntry(flags_bone_all, "BONE_ALWAYS_PROCEDURAL",     0x4);
+InitFlagEntry(flags_bone_all, "BONE_SCREEN_ALIGN_SPHERE",   0x8);
+InitFlagEntry(flags_bone_all, "BONE_SCREEN_ALIGN_CYLINDER", 0x10);
+InitFlagEntry(flags_bone_all, "BONE_IKCHAIN_INFLUENCE",     0x20);
+
+InitFlagEntry(flags_bone_all, "BONE_USED_BY_HITBOX",        0x100);
+InitFlagEntry(flags_bone_all, "BONE_USED_BY_ATTACHMENT",    0x200);
+InitFlagEntry(flags_bone_all, "BONE_USED_BY_VERTEX_LOD0",   0x400);
+InitFlagEntry(flags_bone_all, "BONE_USED_BY_VERTEX_LOD1",   0x800);
+InitFlagEntry(flags_bone_all, "BONE_USED_BY_VERTEX_LOD2",   0x1000);
+InitFlagEntry(flags_bone_all, "BONE_USED_BY_VERTEX_LOD3",   0x2000);
+InitFlagEntry(flags_bone_all, "BONE_USED_BY_VERTEX_LOD4",   0x4000);
+InitFlagEntry(flags_bone_all, "BONE_USED_BY_VERTEX_LOD5",   0x8000);
+InitFlagEntry(flags_bone_all, "BONE_USED_BY_VERTEX_LOD6",   0x10000);
+InitFlagEntry(flags_bone_all, "BONE_USED_BY_VERTEX_LOD7",   0x20000);
+InitFlagEntry(flags_bone_all, "BONE_USED_BY_BONE_MERGE",    0x40000);
+InitFlagEntry(flags_bone_all, "BONE_FLAG_UNK_80000",        0x80000);
+
+InitFlagEntry(flags_bone_all, "BONE_FIXED_ALIGNMENT",       0x100000);
+
+InitFlagEntry(flags_bone_all, "BONE_HAS_SAVEFRAME_POS",     0x200000);
+InitFlagEntry(flags_bone_all, "BONE_HAS_SAVEFRAME_ROT64",   0x400000);
+InitFlagEntry(flags_bone_all, "BONE_HAS_SAVEFRAME_ROT32",   0x800000);
+
+InitFlagEntry(flags_bone_all, "BONE_FLAG_UNK_1000000",      0x1000000);
+
 #define STUDIO_PROC_AXISINTERP	1
 #define STUDIO_PROC_QUATINTERP	2
 #define STUDIO_PROC_AIMATBONE	3
@@ -293,7 +322,7 @@ struct mstudioikrulezeroframe_t
 #endif
 
 local FlagArray_t flags_studioEvent_all(32, "NONE");
-InitFlagEntry(flags_studioEvent_all.strings[10], "NEW_EVENT_STYLE");
+InitFlagEntry(flags_studioEvent_all, "NEW_EVENT_STYLE", 0x400);
 
 
 //
@@ -514,11 +543,10 @@ struct mstudioeyeball_t
 //
 
 // todo bspflags.h
-local FlagArray_t contentsFlags(4, "CONTENTS_EMPTY");
-contentsFlags.strings[0].value = "CONTENTS_SOLID"; 
-contentsFlags.strings[1].value = "CONTENTS_WINDOW"; 
-contentsFlags.strings[2].value = "CONTENTS_AUX";
-contentsFlags.strings[3].value = "CONTENTS_GRATE";
-
+local FlagArray_t flags_contents_all(32, "CONTENTS_EMPTY");
+InitFlagEntry(flags_contents_all, "CONTENTS_SOLID",     0x1);
+InitFlagEntry(flags_contents_all, "CONTENTS_GRATE",     0x8);
+InitFlagEntry(flags_contents_all, "CONTENTS_MONSTER",   0x2000000);
+InitFlagEntry(flags_contents_all, "CONTENTS_LADDER",    0x20000000);
 
 #endif

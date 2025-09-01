@@ -123,6 +123,19 @@ struct Quaternion48
 	uint16 wneg : 1;
 };
 
+const string ReadQuat48(const Quaternion48& q)
+{
+    const float x = ((float)q.x - 32768) * (1.0f / 32768.5);
+    const float y = ((float)q.y - 32768) * (1.0f / 32768.5);
+    const float z = ((float)q.z - 16384) * (1.0f / 16384.5);
+    
+    local float w = (1.0 - x * x - y * y - z * z);
+    if (q.wneg)
+        w = -w;
+
+    return Str("< %f, %f, %f, %f >", x, y, z, w);
+}
+
 struct Quaternion64
 {
     uint64 x : 21 <read=Str("%f", (this - 1048576) * (1 / 1048576.5))>;
@@ -179,17 +192,18 @@ enum <uint8_t> MaterialShaderType_t
 // silly guy
 local int64_t i = 0;
 
+const uint32_t popcount64 (uint64_t n) {
+    n = n - ((n >> 1) & 0x5555555555555555);
+    n = (n & 0x3333333333333333) + ((n >> 2) & 0x3333333333333333);
+    n = (n + (n >> 4)) & 0xF0F0F0F0F0F0F0F;
+    return (n * 0x101010101010101) >> 56;
+}
+
 struct FlagEntry_t
 {
     local string value;
     local bool valid = false;
 };
-
-void InitFlagEntry(FlagEntry_t& entry, const string value)
-{
-    entry.value = value;
-    entry.valid = true;
-}
 
 struct FlagArray_t(const int size, const string noneString)
 {
@@ -198,6 +212,16 @@ struct FlagArray_t(const int size, const string noneString)
 
     FlagEntry_t strings[length] <optimize=false>;
 };
+
+void InitFlagEntry(FlagArray_t& flagList, const string value, const uint64_t flag)
+{
+    const uint64_t mask = flag - 1;
+
+    const uint32_t indice = popcount64(mask);
+
+    flagList.strings[indice].value = value;
+    flagList.strings[indice].valid = true;
+}
 
 string ReadFlags(const uint64_t flags, FlagArray_t& flagList)
 {
