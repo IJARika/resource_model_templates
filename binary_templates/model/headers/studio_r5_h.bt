@@ -58,9 +58,18 @@ InitFlagEntry(flags_studioHdr_r5, "STUDIOHDR_FLAGS_USES_UV3",                   
 // bones
 //
 
+local FlagArray_t flags_jiggleBone_r5(8, "NONE");
+InitFlagEntry(flags_jiggleBone_r5, "JIGGLE_IS_FLEXIBLE",            0x1);
+InitFlagEntry(flags_jiggleBone_r5, "JIGGLE_HAS_FLEX",               0x2);
+InitFlagEntry(flags_jiggleBone_r5, "JIGGLE_HAS_YAW_CONSTRAINT",     0x4);
+InitFlagEntry(flags_jiggleBone_r5, "JIGGLE_HAS_PITCH_CONSTRAINT",   0x8);
+InitFlagEntry(flags_jiggleBone_r5, "JIGGLE_HAS_ANGLE_CONSTRAINT",   0x10);
+InitFlagEntry(flags_jiggleBone_r5, "JIGGLE_HAS_LENGTH_CONSTRAINT",  0x20);
+InitFlagEntry(flags_jiggleBone_r5, "JIGGLE_HAS_BASE_SPRING",        0x40);
+
 struct mstudiojigglebone_t
 {
-	uint8_t flags;
+	uint8_t flags <read=ReadFlags(this, flags_jiggleBone_r5)>;
 	uint8_t bone; // id of bone, might be single byte
 
 	char pad[2];

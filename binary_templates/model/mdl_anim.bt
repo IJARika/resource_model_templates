@@ -64,8 +64,8 @@ struct rle_bone(const int frameCount)
 {
     mstudio_rle_anim_t header <fgcolor=0xAA3366>;
 
-    // r2 uses a static header size
-#ifdef FEATURE_STATIC_RLE_SIZE
+    // r2
+#ifdef FEATURE_ANIM_TITANFALL2
     local uint64_t localPos = startof(header) + 8;
     FSeek(localPos);
     if (!(header.flags & STUDIO_ANIM_NOROT))
@@ -87,15 +87,14 @@ struct rle_bone(const int frameCount)
     if (header.flags & STUDIO_ANIM_RAWPOS)
     {
         Vector48 pos <fgcolor=cLtGreen>;
-
-        localPos += 6;
     }
     else
     {
         rle_valueptr pPos(frameCount) <fgcolor=cLtGreen>;
-
-        localPos += 6;
     }
+
+    // move past position
+    localPos += 6;
 
     FSeek(localPos);
     if (header.flags & STUDIO_ANIM_RAWSCALE)
@@ -106,6 +105,7 @@ struct rle_bone(const int frameCount)
     {
         rle_valueptr pScale(frameCount) <fgcolor=cLtYellow>;
     }
+
 #else
     local uint64_t localPos = startof(header) + sizeof(mstudio_rle_anim_t);
 
@@ -125,7 +125,7 @@ struct rle_bone(const int frameCount)
         localPos += sizeof(mstudioanim_valueptr_t);
     }
 
-#ifdef STUDIO_ANIM_ANIMSCALE
+#ifdef FEATURE_ANIM_TITANFALL
     FSeek(localPos);
     if (header.flags & STUDIO_ANIM_ANIMSCALE)
     {
@@ -159,7 +159,7 @@ struct rle_bone(const int frameCount)
         localPos += sizeof(Vector48);
     }
 
-#ifdef STUDIO_ANIM_RAWSCALE
+#ifdef FEATURE_ANIM_TITANFALL
     FSeek(localPos);
     if (header.flags & STUDIO_ANIM_RAWSCALE)
     {
@@ -192,32 +192,89 @@ struct frame_bone(const uint8_t boneFlags, const int boneIdx, const bool isConst
 {
     local int bone = boneIdx;
 
+// titanfall
+#ifdef FEATURE_ANIM_TITANFALL
     if(((boneFlags & STUDIO_FRAME_RAWROT) && isConstData) || ((boneFlags & STUDIO_FRAME_ANIMROT) && !isConstData))
-        Quaternion48 rot;
-     
+    {
+        if (boneFlags & STUDIO_FRAME_FULLANIM)
+        {
+            Quaternion48S rot <read=ReadQuat48S(this)>;
+        }
+        else
+        {
+            Quaternion48 rot <read=ReadQuat48S(this)>;
+        }
+    }
+
     if(((boneFlags & STUDIO_FRAME_RAWPOS) && isConstData) || ((boneFlags & STUDIO_FRAME_ANIMPOS) && !isConstData))
     {
-#ifdef STUDIO_FRAME_FULLANIM   
         if (boneFlags & STUDIO_FRAME_FULLANIM)
-#else
-        if (boneFlags & STUDIO_FRAME_FULLANIMPOS && !isConstData)
-#endif
+        {
             Vector pos;
+        }
         else
+        {
             Vector48 pos;
+        }
     }
-    
-#ifdef STUDIO_FRAME_RAWSCALE
-#ifdef STUDIO_FRAME_ANIMSCALE
+
     if(((boneFlags & STUDIO_FRAME_RAWSCALE) && isConstData) || ((boneFlags & STUDIO_FRAME_ANIMSCALE) && !isConstData))
     {
-        // this is only used in r1 so we don't have to do a funky check here ;3
         if (boneFlags & STUDIO_FRAME_FULLANIM)
-            Vector pos;
+        {
+            Vector scale;
+        }
         else
-            Vector48 pos;
+        {
+            Vector48 scale;
+        }
     }
-#endif
+// normal source
+#else
+    if (isConstData)
+    {
+        // pos
+        if (boneFlags & STUDIO_FRAME_RAWPOS)
+        {
+            Vector48 pos;
+        }
+        else if (boneFlags & STUDIO_FRAME_FULLRAWPOS)
+        {
+            Vector pos;
+        }
+
+        // rot
+        if (boneFlags & STUDIO_FRAME_RAWROT)
+        {
+            Quaternion48 rot;
+        }
+        else if (boneFlags & STUDIO_FRAME_FULLRAWROT)
+        {
+            Quaternion48S rot;
+        }
+    }
+    else
+    {
+        // pos
+        if (boneFlags & STUDIO_FRAME_ANIMPOS)
+        {
+            Vector48 pos;
+        }
+        else if (boneFlags & STUDIO_FRAME_FULLANIMPOS)
+        {
+            Vector pos;
+        }
+
+        // rot
+        if (boneFlags & STUDIO_FRAME_ANIMROT)
+        {
+            Quaternion48 rot;
+        }
+        else if (boneFlags & STUDIO_FRAME_FULLANIMROT)
+        {
+            Quaternion48S rot;
+        }
+    }
 #endif
 };
 

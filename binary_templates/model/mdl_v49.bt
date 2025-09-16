@@ -264,9 +264,12 @@ struct mstudio_rle_anim_t
 #define STUDIO_FRAME_ANIMPOS	0x04 // Vector48 in framedata
 #define STUDIO_FRAME_ANIMROT	0x08 // Quaternion48 in framedata
 #define STUDIO_FRAME_FULLANIMPOS	0x10 // Vector in framedata
+#define STUDIO_FRAME_FULLRAWPOS     0x20 // Vector in constants
+#define STUDIO_FRAME_FULLRAWROT     0x40 // Quaternion48S in constants
+#define STUDIO_FRAME_FULLANIMROT	0x80 // Quaternion48S in framedata
 
-#define STUDIO_FRAME_CONSTDATA (STUDIO_FRAME_RAWPOS | STUDIO_FRAME_RAWROT) // bone has const data
-#define STUDIO_FRAME_FRAMEDATA (STUDIO_FRAME_ANIMPOS | STUDIO_FRAME_ANIMROT | STUDIO_FRAME_FULLANIMPOS) // bone has frame data
+#define STUDIO_FRAME_CONSTDATA (STUDIO_FRAME_RAWPOS | STUDIO_FRAME_RAWROT | STUDIO_FRAME_FULLRAWPOS | STUDIO_FRAME_FULLRAWROT) // bone has const data
+#define STUDIO_FRAME_FRAMEDATA (STUDIO_FRAME_ANIMPOS | STUDIO_FRAME_ANIMROT | STUDIO_FRAME_FULLANIMPOS | STUDIO_FRAME_FULLANIMROT) // bone has frame data
 
 struct mstudio_frame_anim_t
 {

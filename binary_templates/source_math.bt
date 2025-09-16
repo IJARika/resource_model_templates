@@ -117,10 +117,10 @@ struct Quaternion32
 
 struct Quaternion48
 {
-	uint16 x : 16 <read=Str("%f", (this - 32768) * (1 / 32768.5))>;
-	uint16 y : 16 <read=Str("%f", (this - 32768) * (1 / 32768.5))>;
-	uint16 z : 15 <read=Str("%f", (this - 16384) * (1 / 16384.5))>; // broken
-	uint16 wneg : 1;
+	uint16_t x;
+	uint16_t y;
+	uint16_t z : 15;
+	uint16_t wneg : 1;
 };
 
 const string ReadQuat48(const Quaternion48& q)
@@ -134,6 +134,39 @@ const string ReadQuat48(const Quaternion48& q)
         w = -w;
 
     return Str("< %f, %f, %f, %f >", x, y, z, w);
+}
+
+struct Quaternion48S
+{
+	uint16_t a : 15;
+    uint16_t offsetH : 1;
+	uint16_t b : 15;
+    uint16_t offsetL : 1;
+	uint16_t c : 15;
+    uint16_t dneg : 1;
+};
+
+#define SCALE48S 23168.0		// needs to fit 2*sqrt(0.5) into 15 bits.
+#define SHIFT48S 16384			// half of 2^15 bits.
+
+const string ReadQuat48S(const Quaternion48S& q)
+{
+    float tmp[4];
+
+    const int ia = q.offsetL + q.offsetH * 2;
+	const int ib = (ia + 1) % 4;
+	const int ic = (ia + 2) % 4;
+	const int id = (ia + 3) % 4;
+    tmp[ia] = ((int)q.a - SHIFT48S) * (1.0 / SCALE48S);
+	tmp[ib] = ((int)q.b - SHIFT48S) * (1.0 / SCALE48S);
+	tmp[ic] = ((int)q.c - SHIFT48S) * (1.0 / SCALE48S);
+
+    // sometimes negative value for square root
+	tmp[id] = Sqrt(1.0 - tmp[ia] * tmp[ia] - tmp[ib] * tmp[ib] - tmp[ic] * tmp[ic]);
+	if (dneg)
+		tmp[id] = -tmp[id];
+
+    return Str("< %f, %f, %f, %f >", tmp[0], tmp[1], tmp[2], tmp[3]);
 }
 
 struct Quaternion64

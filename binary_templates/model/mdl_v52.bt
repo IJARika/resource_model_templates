@@ -288,11 +288,11 @@ struct mstudio_frame_anim_boneoffset_t
 
 #define STUDIO_FRAME_RAWPOS 0x01 // Vector48 in constants
 #define STUDIO_FRAME_RAWROT 0x02 // Quaternion48 in constants
-#define STUDIO_FRAME_RAWSCALE 0x04 // Vector48 in constants, atlas_mp_scripted.mdl at_hotdrop_loop at_hotdrop_01
-#define STUDIO_FRAME_ANIMPOS 0x08 // Quaternion48 in framedata
-#define STUDIO_FRAME_ANIMROT 0x10 // Vector48 in framedata
-#define STUDIO_FRAME_ANIMSCALE 0x20 // Vector48 in framedata
-#define STUDIO_FRAME_FULLANIM 0x40 // use full size vectors (12 bytes) for scale and position.
+#define STUDIO_FRAME_RAWSCALE   0x04 // Vector48 in constants, atlas_mp_scripted.mdl at_hotdrop_loop at_hotdrop_01
+#define STUDIO_FRAME_ANIMPOS    0x08 // Quaternion48 in framedata
+#define STUDIO_FRAME_ANIMROT    0x10 // Vector48 in framedata
+#define STUDIO_FRAME_ANIMSCALE  0x20 // Vector48 in framedata
+#define STUDIO_FRAME_FULLANIM   0x40 // use full size vectors (12 bytes) for scale and position.
 
 #define STUDIO_FRAME_CONSTDATA (STUDIO_FRAME_RAWPOS | STUDIO_FRAME_RAWROT | STUDIO_FRAME_RAWSCALE) // bone has const data
 #define STUDIO_FRAME_FRAMEDATA (STUDIO_FRAME_ANIMPOS | STUDIO_FRAME_ANIMROT | STUDIO_FRAME_ANIMSCALE) // bone has frame data
@@ -570,5 +570,6 @@ struct mstudiotexture_t
 #define FEATURE_FRAMEANIM
 #define FEATURE_ANIMBLOCK
 #define FEATURE_ZEROFRAME
+#define FEATURE_ANIM_TITANFALL
 
 #include "./mdl.bt"

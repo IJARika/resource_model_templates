@@ -592,6 +592,6 @@ struct mstudiocollhdr_t
 
 #define FEATURE_MAPCOLL
 #define FEATURE_UIPANELS
-#define FEATURE_STATIC_RLE_SIZE
+#define FEATURE_ANIM_TITANFALL2
 
 #include "./mdl.bt"

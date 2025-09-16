@@ -97,10 +97,20 @@ struct mstudioaimatbone_t
 	Vector			basepos;
 };
 
+local FlagArray_t flags_jiggleBone_all(8, "NONE");
+InitFlagEntry(flags_jiggleBone_all, "JIGGLE_IS_FLEXIBLE",            0x1);
+InitFlagEntry(flags_jiggleBone_all, "JIGGLE_IS_RIGID",               0x2);
+InitFlagEntry(flags_jiggleBone_all, "JIGGLE_HAS_YAW_CONSTRAINT",     0x4);
+InitFlagEntry(flags_jiggleBone_all, "JIGGLE_HAS_PITCH_CONSTRAINT",   0x8);
+InitFlagEntry(flags_jiggleBone_all, "JIGGLE_HAS_ANGLE_CONSTRAINT",   0x10);
+InitFlagEntry(flags_jiggleBone_all, "JIGGLE_HAS_LENGTH_CONSTRAINT",  0x20);
+InitFlagEntry(flags_jiggleBone_all, "JIGGLE_HAS_BASE_SPRING",        0x40);
+InitFlagEntry(flags_jiggleBone_all, "JIGGLE_IS_BOING",               0x80);
+
 // this struct is the same in r1 and r2, and unchanged from p2
 struct mstudiojigglebone_t
 {
-	int flags;
+	int flags <read=ReadFlags(this, flags_jiggleBone_all)>;
 
 	// general params
 	float length; // how far from bone base, along bone, is tip
@@ -184,7 +194,7 @@ struct mstudioattachment_t
 	int sznameindex;
 	unsigned int flags;
 	int localbone;
-	matrix3x4_t local0; // attachment point
+	matrix3x4_t local_mx; // attachment point
 	int unused[8];
 };
 #endif
