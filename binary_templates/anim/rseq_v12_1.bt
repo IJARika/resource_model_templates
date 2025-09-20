@@ -1,0 +1,21 @@
+//------------------------------------------------
+//--- 010 Editor v12.0.1 Binary Template
+//
+//      File: rseq_v12.bt
+//   Authors: Rika
+//   Version: 0.3
+//   Purpose: Respawn Sequence Files
+//  Category: Animation
+// File Mask: *.rseq
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+
+#include "../source_math.bt"
+#include "../model/headers/studio_r5_h.bt"
+#include "../model/headers/studio_h.bt"
+#include "./headers/rseq_v12_1_h.bt"
+#include "./rseq.bt"
+
+ParseSeqdesc();

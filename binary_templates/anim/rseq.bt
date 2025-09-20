@@ -583,29 +583,19 @@ const int GetSectionLength_DP(mstudioanimdesc_t& animdesc, const int section)
 
 // these functions subtract one to make the number of frames the max index
 // if we don't do this, sections that are not full length will cause issues
-const int GetSectionCount_RLE(mstudioanimdesc_t& animdesc)
+const int GetSectionCount(mstudioanimdesc_t& animdesc)
 {
-    local bool useStall = false;
-    local int sectionstallframes = 0;
+    const int useTrailSection = (animdesc.flags & STUDIO_DATAPOINTANIM) ? false : true;
+
+    local int useStallSection = 0;
+#ifndef FEATURE_EXTERNAL_ANIM
 #ifdef FEATURE_STALL
-    if (animdesc.sectionstallframes)
-    {
-        useStall = true;
-        sectionstallframes = animdesc.sectionstallframes;
-    }
+    useStallSection = animdesc.sectionstallframes ? true : false;
+#endif
 #endif
 
-    const int sectionbase = (animdesc.numframes - sectionstallframes - 1) / animdesc.sectionframes;
-    const int sectionindex = sectionbase + 1 + useStall; // add the trailing section and stall section
-    return sectionindex + 1; // make this index a count
-}
-
-const int GetSectionCount_DP(mstudioanimdesc_t& animdesc)
-{
-    local bool useStall = animdesc.sectionstallframes ? true : false;
-
-    const int sectionbase = (animdesc.numframes - animdesc.sectionstallframes - 1) / animdesc.sectionframes;
-    const int sectionindex = sectionbase + useStall; // add the trailing section and stall section
+    const int sectionbase = (animdesc.numframes - animdesc.sectionstallframes - 1) / animdesc.sectionframes; // subtract one to get the max frame index
+    const int sectionindex = sectionbase + useTrailSection + useStallSection; // add the trailing section and stall section
     return sectionindex + 1; // make this index a count
 }
 
@@ -622,12 +612,13 @@ void ParseAnimdesc(const uint64_t baseptr, const int animindex)
         if ((animdesc.flags & STUDIO_HAS_ANIM) && animdesc.sectionframes > 0)
         {
             // this equation gets the max INDEX of the array, if we add one to this, we'll get the section count
-            local const int sectionCount = isDataPoint ? GetSectionCount_DP(animdesc) : GetSectionCount_RLE(animdesc);
+            local const int sectionCount = GetSectionCount(animdesc);
             local int maxFrames = 0;
 
             FSeek(startof(animdesc) + GetOffset(animdesc.sectionindex));
             mstudioanimsections_t sections[sectionCount] <fgcolor=cLtBlue>;
 
+#ifndef FEATURE_EXTERNAL_ANIM
             for (j = 0; j < sectionCount; j++)
             {
                 // check if this section is stored externally!
@@ -649,8 +640,10 @@ void ParseAnimdesc(const uint64_t baseptr, const int animindex)
                 else
                     rle_anim section(startof(animdesc), sections[j].animindex, maxFrames);
             };
+#endif
         }
 
+#ifndef FEATURE_EXTERNAL_ANIM
         if ((animdesc.flags & STUDIO_HAS_ANIM) && animdesc.sectionframes == 0)
         {
             FSeek(startof(animdesc) + animdesc.animindex);
@@ -660,6 +653,7 @@ void ParseAnimdesc(const uint64_t baseptr, const int animindex)
                 rle_anim animation(startof(animdesc), animdesc.animindex, animdesc.numframes - 1);
             
         }
+#endif
 
         if(animdesc.numikrules && !(animdesc.ikruleindex == 3 || animdesc.ikruleindex == 5))
         {

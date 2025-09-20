@@ -368,10 +368,12 @@ if(hdr.numskinfamilies > 1)
 {
     local const int skinSize = (sizeof(short) * hdr.numskinref) * hdr.numskinfamilies;
 
-    FSeek(startof(hdr) + GetOffset(hdr.skinindex) + Align(skinSize, 4));
 #ifdef FEATURE_REFACTOR
+    // no longer aligned to 4
+    FSeek(startof(hdr) + GetOffset(hdr.skinindex) + skinSize);
     uint16_t skingroupnames[hdr.numskinfamilies - 1] <bgcolor=cDkGreen, read=ReadString(GetOffset(this))>;
 #else
+    FSeek(startof(hdr) + GetOffset(hdr.skinindex) + Align(skinSize, 4));
     int skingroupnames[hdr.numskinfamilies - 1] <bgcolor=cDkGreen, read=ReadString(this)>;
 #endif
 }
