@@ -115,7 +115,7 @@ if(exists(pakhdr.unkDataSize_78) && pakhdr.unkDataSize_78 > 0)
 
 if (exists(pakhdr.patchCount) && pakhdr.patchCount > 0)
 {
-    char patchData[patchDataHeader.patchDataStreamSize];
+    //char patchData[patchDataHeader.patchDataStreamSize];
 }
 
 // some functions and vars for data processing
@@ -198,6 +198,9 @@ struct {
 #include "./pakfile_rpsk.bt"
 #include "./pakfile_font.bt"
 #include "./pakfile_uimg.bt"
+#include "./pakfile_ui.bt"
+#include "./pakfile_Ptch.bt"
+#include "./pakfile_vers.bt"
 
 FSeek(startof(page_data));
 struct
@@ -288,13 +291,40 @@ struct
 
             break;
         }
+        case ID_UI:
+        {
+            struct {
+                local int index = i;
+                HandleUI(assets[index], pageoffsets);
+            } asset_ui <read=GetAssetNameFull(assets[index], this.hdr.name, "ui", ".rpak")>;
+
+            break;
+        }
+        case ID_PTCH:
+        {
+            struct {
+                local int index = i;
+                HandlePTCH(assets[index], pageoffsets);
+            } asset_Ptch <read="patch_master.rpak">;
+
+            break;
+        }
+        case ID_VERS:
+        {
+            struct {
+                local int index = i;
+                HandleVERS(assets[index], pageoffsets);
+            } asset_vers <read="patch_master.rpak">;
+
+            break;
+        }
         default:
         {
             struct {
                 local int index = i;
                 PageSeek(assets[index].headPagePtr);
                 char data[assets[index].headerStructSize];
-            } asset_stub <read = DefaultAssetName(assets[index])>;
+            } asset_stub <read=DefaultAssetName(assets[index])>;
 
             break;
         }

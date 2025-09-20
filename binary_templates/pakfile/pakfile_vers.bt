@@ -1,0 +1,46 @@
+//------------------------------------------------
+//--- 010 Editor v12.0.1 Binary Template
+//
+//      File: pakfile_uimg.bt
+//   Authors: Rika
+//   Version: 0.1
+//   Purpose: Respawn Pak Files
+//  Category: Archive
+// File Mask: *.rpak
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+const uint32_t ID_VERS = MakeFourCC('v', 'e', 'r', 's');
+
+struct VersionAssetHeader_v1_t
+{
+	uint32_t unk_0;
+	uint32_t unk_4;
+
+    PagePtr_t build;
+    PagePtr_t unk_10;
+
+    char unk_18[32];
+};
+
+void HandleVERS(PakAsset_t& asset, uint64_t pageoffsets[])
+{
+    PageSeek(asset.headPagePtr);
+    switch (asset.version)
+    {
+    case 1:
+    {
+        VersionAssetHeader_v1_t hdr;
+        break;
+    }
+    };
+
+    PageSeek(hdr.build);
+    string buildString <fgcolor=cLtYellow>;
+
+    PageSeek(hdr.unk_10);
+    string unk_10 <fgcolor=cLtRed>;
+
+    char bytes[0x288] <fgcolor=cLtGreen>;
+}

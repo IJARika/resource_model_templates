@@ -290,4 +290,9 @@ string ReadFlags(const uint64_t flags, FlagArray_t& flagList)
     return flagString;
 }
 
+uint32_t MakeFourCC(const char ch0, const char ch1, const char ch2, const char ch3)
+{
+    return ((DWORD)(BYTE)(ch0) | ((DWORD)(BYTE)(ch1) << 8) | ((DWORD)(BYTE)(ch2) << 16) | ((DWORD)(BYTE)(ch3) << 24 ));
+}
+
 #endif

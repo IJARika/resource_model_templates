@@ -1,0 +1,42 @@
+//------------------------------------------------
+//--- 010 Editor v12.0.1 Binary Template
+//
+//      File: pakfile_uimg.bt
+//   Authors: Rika
+//   Version: 0.1
+//   Purpose: Respawn Pak Files
+//  Category: Archive
+// File Mask: *.rpak
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+const uint32_t ID_PTCH = MakeFourCC('P', 't', 'c', 'h');
+
+struct PatchAssetHeader_v1_t
+{
+	uint8_t unk_0; // seems to be the max patch indice, who knows
+    uint8_t unk_1[3];
+	int patchCount;
+	PagePtr_t pakNames;
+	PagePtr_t pakPatchVersions;
+};
+
+void HandlePTCH(PakAsset_t& asset, uint64_t pageoffsets[])
+{
+    PageSeek(asset.headPagePtr);
+    switch (asset.version)
+    {
+    case 1:
+    {
+        PatchAssetHeader_v1_t hdr;
+        break;
+    }
+    };
+
+    PageSeek(hdr.pakNames);
+    PagePtr_t pakNames[hdr.patchCount] <read=PageString(this)>;
+
+    PageSeek(hdr.pakPatchVersions);
+    uint8_t pakPatchVersions[hdr.patchCount] <fgcolor=cLtRed>;
+}

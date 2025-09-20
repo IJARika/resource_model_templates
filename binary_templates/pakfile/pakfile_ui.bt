@@ -1,0 +1,62 @@
+//------------------------------------------------
+//--- 010 Editor v12.0.1 Binary Template
+//
+//      File: pakfile_uimg.bt
+//   Authors: Rika
+//   Version: 0.1
+//   Purpose: Respawn Pak Files
+//  Category: Archive
+// File Mask: *.rpak
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+const uint32_t ID_UI = 0x6975;
+
+struct UIAssetHeader_v29_t
+{
+	PagePtr_t name;
+
+    PagePtr_t defaultValues;
+    PagePtr_t transformData;
+    
+    float elementWidth;
+    float elementHeight;
+    float elementWidthRatio;
+    float elementHeightRatio;
+    
+    PagePtr_t argNames;
+    PagePtr_t argClusters;
+    PagePtr_t args;
+    int16_t argCount;
+    
+    int16_t unk_10; // count
+    
+    uint16_t ruiDataStructSize;
+    uint16_t defaultValuesSize;
+    uint16_t styleDescriptorCount;
+    
+    uint16_t unk_A4;
+    
+    uint16_t renderJobCount;
+    uint16_t argClusterCount;
+    
+    PagePtr_t styleDescriptors;
+    PagePtr_t renderJobs;
+    PagePtr_t mappingData;
+};
+
+void HandleUI(PakAsset_t& asset, uint64_t pageoffsets[])
+{
+    PageSeek(asset.headPagePtr);
+    switch (asset.version)
+    {
+    case 29:
+    case 30:
+    case 39:
+    {
+        UIAssetHeader_v29_t hdr;
+        break;
+    }
+    };
+}
