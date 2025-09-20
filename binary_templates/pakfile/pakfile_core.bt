@@ -115,7 +115,7 @@ if(exists(pakhdr.unkDataSize_78) && pakhdr.unkDataSize_78 > 0)
 
 if (exists(pakhdr.patchCount) && pakhdr.patchCount > 0)
 {
-    //char patchData[patchDataHeader.patchDataStreamSize];
+    char patchData[patchDataHeader.patchDataStreamSize];
 }
 
 // some functions and vars for data processing
@@ -314,7 +314,7 @@ struct
             struct {
                 local int index = i;
                 HandleVERS(assets[index], pageoffsets);
-            } asset_vers <read="patch_master.rpak">;
+            } asset_vers <read=DefaultAssetName(assets[index]>;
 
             break;
         }
