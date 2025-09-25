@@ -15,6 +15,8 @@ Studio Model:
 
 Misc:
   - pakfile
+  - dmx
+  - vtf
 
 # Templates (legacy)
 Located in the 'structs' folder.

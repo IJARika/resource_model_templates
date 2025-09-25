@@ -1,0 +1,655 @@
+//------------------------------------------------
+//--- 010 Editor v12.0.1 Binary Template
+//
+//      File: dmx.bt
+//   Authors: Rika
+//   Version: 0.2
+//   Purpose: Data Model eXchange files
+//  Category: Model
+// File Mask: *.dmx,*.pcf
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+#include "../source_math.bt"
+
+struct DmxHeader_t
+{
+    string version; // header is text
+
+    local string encodingName;
+    local int encodingVersion;
+
+    local string formatName;
+    local int formatVersion;
+
+    SScanf(hdr.version, "<!-- dmx encoding %s %i format %s %i -->", encodingName, encodingVersion, formatName, formatVersion);
+};
+
+struct StringEntries_t(const int numStrings)
+{
+    for(i = 0; i < numStrings; i++)
+    {
+        struct {
+            string str;
+        } entry <read=Str(this.entry)>;
+    }
+};
+
+struct StringDict_v2_t
+{
+    uint16_t numStrings;
+
+    StringEntries_t strings(numStrings);
+};
+
+struct StringDict_v4_t
+{
+    int numStrings;
+
+    StringEntries_t strings(numStrings);
+};
+
+const string ReadStringDict(int idx)
+{
+    return stringdict.strings.entry[idx].str;
+}
+
+enum <char> DmAttributeType_t
+{
+	AT_UNKNOWN = 0,
+
+	//AT_FIRST_VALUE_TYPE = 1,
+	//AT_ELEMENT = AT_FIRST_VALUE_TYPE,
+
+	AT_ELEMENT = 1,
+	AT_INT = 2,
+	AT_FLOAT = 3,
+	AT_BOOL = 4,
+	AT_STRING = 5,
+	AT_VOID = 6,
+	AT_TIME = 7,
+	AT_COLOR = 8, //rgba
+	AT_Vector2D = 9,
+	AT_VECTOR3 = 10,
+	AT_Vector4D = 11,
+	AT_QANGLE = 12,
+	AT_QUATERNION = 13,
+	AT_VMATRIX = 14,
+
+	//AT_FIRST_ARRAY_TYPE = 15,
+	//AT_ELEMENT_ARRAY = AT_FIRST_ARRAY_TYPE,
+
+	AT_ELEMENT_ARRAY = 15,
+	AT_INT_ARRAY = 16,
+	AT_FLOAT_ARRAY = 17,
+	AT_BOOL_ARRAY = 18,
+	AT_STRING_ARRAY = 19,
+	AT_VOID_ARRAY = 20,
+	AT_TIME_ARRAY = 21,
+	AT_COLOR_ARRAY = 22,
+	AT_Vector2D_ARRAY = 23,
+	AT_VECTOR3_ARRAY = 24,
+	AT_Vector4D_ARRAY = 25,
+	AT_QANGLE_ARRAY = 26,
+	AT_QUATERNION_ARRAY = 27,
+	AT_VMATRIX_ARRAY = 28,
+	AT_TYPE_COUNT = 29,
+
+	AT_TYPE_INVALID = 0xff // whar
+};
+
+string ReadAttributeType(char type)
+{
+    string out = "";
+
+    switch (type)
+    {
+    case AT_UNKNOWN:
+    {
+        out = "AT_UNKNOWN";
+        break;
+    }
+    case AT_ELEMENT:
+    {
+        out = "AT_ELEMENT";
+        break;
+    }
+    case AT_INT:
+    {
+        out = "AT_INT";
+        break;
+    }
+    case AT_FLOAT:
+    {
+        out = "AT_FLOAT";
+        break;
+    }
+    case AT_BOOL:
+    {
+        out = "AT_BOOL";
+        break;
+    }
+    case AT_STRING:
+    {
+        out = "AT_STRING";
+        break;
+    }
+    case AT_VOID:
+    {
+        out = "AT_VOID";
+        break;
+    }
+    case AT_TIME:
+    {
+        out = "AT_TIME";
+        break;
+    }
+    case AT_COLOR:
+	{
+		out = "AT_COLOR";
+        break;
+	}
+    case AT_Vector2D:
+	{
+		out = "AT_Vector2D";
+        break;
+	}
+    case AT_VECTOR3:
+	{
+		out = "AT_VECTOR3";
+        break;
+	}
+    case AT_Vector4D:
+	{
+        out = "AT_Vector4D";
+        break;
+	}
+    case AT_QANGLE:
+	{
+        out = "AT_QANGLE";
+        break;
+	}
+    case AT_QUATERNION:
+	{
+        out = "AT_QUATERNION";
+        break;
+    }
+    case AT_VMATRIX:
+	{
+        out = "AT_VMATRIX";
+        break;
+    }
+	case AT_ELEMENT_ARRAY:
+	{
+		out = "AT_ELEMENT_ARRAY";
+        break;
+    }
+	case AT_INT_ARRAY:
+	{    
+		out = "AT_INT_ARRAY";
+        break;
+	}
+    case AT_FLOAT_ARRAY:
+	{    
+        out = "AT_FLOAT_ARRAY";
+        break;
+    }
+    case AT_BOOL_ARRAY:
+	{    
+        out = "AT_BOOL_ARRAY";
+        break;
+    }
+    case AT_STRING_ARRAY:
+	{    
+        out = "AT_STRING_ARRAY";
+        break;
+    }
+    case AT_VOID_ARRAY:
+	{    
+        out = "AT_VOID_ARRAY";
+        break;
+    }
+    case AT_TIME_ARRAY:
+	{    
+        out = "AT_TIME_ARRAY";
+        break;
+    }
+    case AT_COLOR_ARRAY:
+	{    
+        out = "AT_COLOR_ARRAY";
+        break;
+    }
+    case AT_Vector2D_ARRAY:
+	{    
+        out = "AT_Vector2D_ARRAY";
+        break;
+    }
+    case AT_VECTOR3_ARRAY:
+	{    
+        out = "AT_VECTOR3_ARRAY";
+        break;
+    }
+    case AT_Vector4D_ARRAY:
+	{    
+        out = "AT_Vector4D_ARRAY";
+        break;
+    }
+    case AT_QANGLE_ARRAY:
+	{    
+        out = "AT_QANGLE_ARRAY";
+        break;
+    }
+    case AT_QUATERNION_ARRAY:
+	{    
+        out = "AT_QUATERNION_ARRAY";
+        break;
+    }
+    case AT_VMATRIX_ARRAY:
+	{    
+        out = "AT_VMATRIX_ARRAY";
+        break;
+    }
+    case AT_TYPE_COUNT:
+	{    
+        out = "AT_TYPE_COUNT";
+        break;
+    }
+    default:
+	{    
+        out = "AT_TYPE_INVALID";
+        break;  
+    }     
+    }
+
+    return out;
+}
+
+void CreateAttributeValue(char type, const int encodingVersion)
+{
+    switch (type)
+    {
+    case AT_UNKNOWN:
+	{    
+        return;
+    }
+    case AT_ELEMENT:
+	{    
+        int value <read=elementlist.element[this]._name>; // whar, element idx?
+        // size of 0, do nothing
+        return;
+    }
+    case AT_INT:
+	{    
+        int value;
+        return;
+    }
+    case AT_FLOAT:
+	{    
+        float value;
+        return;
+    }
+    case AT_BOOL:
+	{    
+        char value; // bool is size of char
+        return;
+    }
+    case AT_STRING:
+	{
+        switch (encodingVersion)
+        {
+        case 2:
+        case 3:
+        {
+            string value;
+            break;
+        }
+        case 4:
+        {
+            uint16_t value <read=ReadStringDict(this)>;
+            break;
+        }
+        case 5:
+        {
+            int value <read=ReadStringDict(this)>;
+            break;
+        }
+        }
+    
+        return;
+    }
+    case AT_VOID:
+	{    
+        int value;
+        return;
+    }
+    case AT_TIME:
+	{    
+        int value; // DmeTime_t
+        return;
+    }
+    case AT_COLOR:
+	{    
+        Color32 value; // should be "color" but the struct is the same
+        return;
+    }
+    case AT_Vector2D:
+	{    
+        Vector2D value;
+        return;
+    }
+    case AT_VECTOR3:
+	{    
+        Vector value;
+        return;
+    }
+    case AT_Vector4D:
+	{    
+        Vector4D value;
+        return;
+    }
+    case AT_QANGLE:
+	{    
+        QAngle value;
+        return;
+    }
+    case AT_QUATERNION:
+	{    
+        Quaternion value;
+        return;
+    }
+    case AT_VMATRIX:
+	{    
+        char value; // VMatrix, need this struct
+        return;
+    }
+    default:
+        break;
+	}
+	
+	int numValues;
+	
+	if (!numValues)
+	{
+		return;
+	}
+	
+	switch (type)
+    {
+    case AT_ELEMENT_ARRAY:
+	{    
+        int values[numValues] <read=elementlist.element[this]._name>;
+        return;
+    }
+    case AT_INT_ARRAY:
+	{    
+        int values[numValues];
+        return;
+    }
+    case AT_FLOAT_ARRAY:
+	{    
+        float values[numValues];
+        return;
+    }
+    case AT_BOOL_ARRAY:
+	{    
+        int values[numValues];
+        return;
+    }
+    case AT_STRING_ARRAY:
+	{    
+        struct { string s; } value[numValues] <optimize=false, read=this.s>;
+        return;
+    }
+    case AT_VOID_ARRAY:
+	{    
+        return;
+    }
+    case AT_TIME_ARRAY:
+	{    
+        int values[numValues]; // DmeTime_t
+        return;
+    }
+    case AT_COLOR_ARRAY:
+	{    
+        Color32 values[numValues];
+        return;
+    }
+    case AT_Vector2D_ARRAY:
+	{    
+        Vector2D values[numValues];
+        return;
+    }
+    case AT_VECTOR3_ARRAY:
+	{    
+        Vector values[numValues];
+        return;
+    }
+    case AT_Vector4D_ARRAY:
+	{    
+        Vector4D values[numValues];
+        return;
+    }
+    case AT_QANGLE_ARRAY:
+	{    
+        QAngle values[numValues];
+        return;
+    }
+    case AT_QUATERNION_ARRAY:
+	{    
+        Quaternion values[numValues];
+        return;
+    }
+    case AT_VMATRIX_ARRAY:
+	{    
+        char values[numValues]; // VMatrix, need this struct
+        return;
+    }
+    case AT_TYPE_COUNT:
+    default:
+        break;       
+    }
+	
+	Assert(false);
+}
+
+struct DmxAttribute_v2_t(const int encodingVersion)
+{
+    uint16_t name <read=ReadStringDict(this)>; // string dictionary index
+	DmAttributeType_t type; // DmAttributeType_t
+	//int value; // see below
+    CreateAttributeValue(type, encodingVersion);
+};
+
+struct DmxAttribute_v5_t(const int encodingVersion)
+{
+    int name <read=ReadStringDict(this)>; // string dictionary index
+	DmAttributeType_t type; // DmAttributeType_t
+	//int value; // see below
+    CreateAttributeValue(type, encodingVersion);
+};
+
+struct AttributeList_t(const int idx, const int encodingVersion)
+{
+    local int parent = idx;
+
+    int numAttributes;
+
+    switch (encodingVersion)
+    {
+    case 2:
+    case 3:
+    case 4:
+    {
+        DmxAttribute_v2_t attribute(encodingVersion)[numAttributes] <optimize=false, read=Str("Name: %s; Type: %s;", ReadStringDict(this.name), ReadAttributeType(this.type))>;
+        break;
+    }
+    case 5:
+    {
+        DmxAttribute_v5_t attribute(encodingVersion)[numAttributes] <optimize=false, read=Str("Name: %s; Type: %s;", ReadStringDict(this.name), ReadAttributeType(this.type))>;
+        break;
+    }
+    }
+};
+
+struct DmxElement_v2_t
+{
+    // struct
+	uint16_t type <read=ReadStringDict(this)>; // string dictionary index
+    string name;
+
+	GUID guid; // little-endian, this is GUID/UUID type I think
+
+    // for reading
+    local string _type = ReadStringDict(type);
+    local string _name = name;
+};
+
+struct DmxElement_v4_t
+{
+    // struct
+	uint16_t type <read=ReadStringDict(this)>; // string dictionary index
+    uint16_t name <read=ReadStringDict(this)>; // string dictionary index
+
+	GUID guid; // little-endian, this is GUID/UUID type I think
+
+    // for reading
+    local string _type = ReadStringDict(type);
+    local string _name = ReadStringDict(name);
+};
+
+struct DmxElement_v5_t
+{
+    // struct
+	int type <read=ReadStringDict(this)>; // string dictionary index
+    int name <read=ReadStringDict(this)>; // string dictionary index
+
+	GUID guid; // little-endian, this is GUID/UUID type I think
+
+    // for reading
+    local string _type = ReadStringDict(type);
+    local string _name = ReadStringDict(name);
+};
+
+void ElementForVersion(const int encodingVersion)
+{
+    switch (encodingVersion)
+    {
+    case 2:
+    case 3:
+    {
+        DmxElement_v2_t element <fgcolor=0x77cc22, read=Str("Type: %s; Name: %s;", this._type, this._name)>;
+        break;
+    }
+    case 4:
+    {
+        DmxElement_v4_t element <fgcolor=0x77cc22, read=Str("Type: %s; Name: %s;", this._type, this._name)>;
+        break;
+    }
+    case 5:
+    {
+        DmxElement_v5_t element <fgcolor=0x77cc22, read=Str("Type: %s; Name: %s;", this._type, this._name)>;
+        break;
+    }
+    }
+}
+
+struct ElementList_t(const int encodingVersion)
+{
+    int numElements <fgcolor=0x77cc88>;
+
+    for (i = 0; i < numElements; i++)
+    {
+        ElementForVersion(encodingVersion);
+    }
+};
+
+DmxHeader_t hdr <fgcolor=0xccef33>;
+Printf("attempting to parse dmx with encoding %s %i and format %s %i", hdr.encodingName, hdr.encodingVersion, hdr.formatName, hdr.formatVersion);
+
+if (hdr.encodingName != "binary")
+{
+    Printf("DMX encoding was %s instead of binary, which is currently unsupported", hdr.encodingName);
+    return;
+}
+
+// create string dict
+switch (hdr.encodingVersion)
+{
+case 2:
+case 3:
+{
+    StringDict_v2_t stringdict <fgcolor=0x44ef66>;
+    break;
+}
+case 4:
+case 5:
+{
+    StringDict_v4_t stringdict <fgcolor=0x44ef66>;
+    break;
+}
+default:
+{
+    Assert(false);
+    return;
+}
+}
+
+// create element list
+ElementList_t elementlist(hdr.encodingVersion);
+
+struct
+{
+    for (i = 0; i < elementlist.numElements; i++)
+    {
+        AttributeList_t attributelist(i, hdr.encodingVersion) <fgcolor=0x779922, read=Str("Type: %s; Name: %s; %i attributes;", elementlist.element[this.parent]._type, elementlist.element[this.parent]._name, this.numAttributes)>;
+    }
+} attributes;
+
+// element tree
+void CreateElementTree(const int elementIdx, const int encodingVersion)
+{
+    FSeek(startof(elementlist.element[elementIdx]));
+    struct (const int elementIdx, const int encodingVersion) {
+        FSeek(startof(elementlist.element[elementIdx]));
+        ElementForVersion(encodingVersion);
+
+        FSeek(startof(attributes.attributelist[elementIdx]));
+        AttributeList_t attributelist(elementIdx, encodingVersion) <read=Str("%i attributes", this.numAttributes)>;
+        
+        local int attributeIdx = 0;
+        local int arrayIdx = 0;
+        for(attributeIdx = 0; attributeIdx < attributelist.numAttributes; attributeIdx++)
+        {
+            switch(attributelist.attribute[attributeIdx].type)
+            {
+            case AT_ELEMENT:
+                if(attributelist.attribute[attributeIdx].value < 0)
+                    break;
+
+                CreateElementTree(attributelist.attribute[attributeIdx].value, encodingVersion);
+                break;
+            case AT_ELEMENT_ARRAY:
+                for(arrayIdx = 0; arrayIdx < attributelist.attribute[attributeIdx].numValues; arrayIdx++)
+                {
+                    if(attributelist.attribute[attributeIdx].values[arrayIdx] < 0)
+                        break;
+                    CreateElementTree(attributelist.attribute[attributeIdx].values[arrayIdx], encodingVersion);
+                }
+                break;
+            default:
+                break;
+            }
+        }
+
+    } element_branch(elementIdx, encodingVersion) <read=Str("Type: %s; Name: %s; %i attributes;", this.element._type, this.element._name, this.attributelist.numAttributes)>;
+}
+
+struct ElementTree_t (const int encodingVersion)
+{
+    CreateElementTree(0, encodingVersion);
+};
+
+// actual tree structure
+FSeek(startof(elementlist.element[0]));
+ElementTree_t elementtree(hdr.encodingVersion);
