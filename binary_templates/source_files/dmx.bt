@@ -23,7 +23,20 @@ struct DmxHeader_t
     local string formatName;
     local int formatVersion;
 
-    SScanf(hdr.version, "<!-- dmx encoding %s %i format %s %i -->", encodingName, encodingVersion, formatName, formatVersion);
+    if (version == "<!-- DMXVersion binary_v2 -->\n")
+    {
+        encodingName = "binary";
+        encodingVersion = 0;
+
+        formatName = "";
+        formatVersion = 0;
+    }
+    else
+    {
+        SScanf(hdr.version, "<!-- dmx encoding %s %i format %s %i -->\n", encodingName, encodingVersion, formatName, formatVersion);
+    } 
+
+    
 };
 
 struct StringEntries_t(const int numStrings)
@@ -32,13 +45,13 @@ struct StringEntries_t(const int numStrings)
     {
         struct {
             string str;
-        } entry <read=Str(this.entry)>;
+        } entry <read=Str(this.str)>;
     }
 };
 
 struct StringDict_v2_t
 {
-    uint16_t numStrings;
+    short numStrings;
 
     StringEntries_t strings(numStrings);
 };
@@ -298,6 +311,8 @@ void CreateAttributeValue(char type, const int encodingVersion)
 	{
         switch (encodingVersion)
         {
+        case 0:
+        case 1:
         case 2:
         case 3:
         {
@@ -306,7 +321,7 @@ void CreateAttributeValue(char type, const int encodingVersion)
         }
         case 4:
         {
-            uint16_t value <read=ReadStringDict(this)>;
+            short value <read=ReadStringDict(this)>;
             break;
         }
         case 5:
@@ -324,8 +339,26 @@ void CreateAttributeValue(char type, const int encodingVersion)
         return;
     }
     case AT_TIME:
-	{    
-        int value; // DmeTime_t
+	{
+        switch (encodingVersion)
+        {
+        case 0:
+        case 1:
+        case 2:
+        {
+            Assert(false);
+            // UUID
+            break;
+        }
+        case 3:
+        case 4:
+        case 5:
+        {
+            int value; // DmeTime_t
+            break;
+        }
+        }
+        
         return;
     }
     case AT_COLOR:
@@ -407,7 +440,25 @@ void CreateAttributeValue(char type, const int encodingVersion)
     }
     case AT_TIME_ARRAY:
 	{    
-        int values[numValues]; // DmeTime_t
+        switch (encodingVersion)
+        {
+        case 0:
+        case 1:
+        case 2:
+        {
+            Assert(false);
+            // UUID
+            break;
+        }
+        case 3:
+        case 4:
+        case 5:
+        {
+            int values[numValues]; // DmeTime_t
+            break;
+        }
+        }
+
         return;
     }
     case AT_COLOR_ARRAY:
@@ -453,9 +504,17 @@ void CreateAttributeValue(char type, const int encodingVersion)
 	Assert(false);
 }
 
+struct DmxAttribute_v1_t(const int encodingVersion)
+{
+    string name;
+	DmAttributeType_t type; // DmAttributeType_t
+	//int value; // see below
+    CreateAttributeValue(type, encodingVersion);
+};
+
 struct DmxAttribute_v2_t(const int encodingVersion)
 {
-    uint16_t name <read=ReadStringDict(this)>; // string dictionary index
+    short name <read=ReadStringDict(this)>; // string dictionary index
 	DmAttributeType_t type; // DmAttributeType_t
 	//int value; // see below
     CreateAttributeValue(type, encodingVersion);
@@ -477,6 +536,12 @@ struct AttributeList_t(const int idx, const int encodingVersion)
 
     switch (encodingVersion)
     {
+    case 0:
+    case 1:
+    {
+        DmxAttribute_v1_t attribute(encodingVersion)[numAttributes] <optimize=false, read=Str("Name: %s; Type: %s;", this.name, ReadAttributeType(this.type))>;
+        break;
+    }
     case 2:
     case 3:
     case 4:
@@ -492,10 +557,23 @@ struct AttributeList_t(const int idx, const int encodingVersion)
     }
 };
 
+struct DmxElement_v1_t
+{
+    // struct
+	string type;
+    string name;
+
+	GUID guid; // little-endian, this is GUID/UUID type I think
+
+    // for reading
+    local string _type = type;
+    local string _name = name;
+};
+
 struct DmxElement_v2_t
 {
     // struct
-	uint16_t type <read=ReadStringDict(this)>; // string dictionary index
+	short type <read=ReadStringDict(this)>; // string dictionary index
     string name;
 
 	GUID guid; // little-endian, this is GUID/UUID type I think
@@ -508,8 +586,8 @@ struct DmxElement_v2_t
 struct DmxElement_v4_t
 {
     // struct
-	uint16_t type <read=ReadStringDict(this)>; // string dictionary index
-    uint16_t name <read=ReadStringDict(this)>; // string dictionary index
+	short type <read=ReadStringDict(this)>; // string dictionary index
+    short name <read=ReadStringDict(this)>; // string dictionary index
 
 	GUID guid; // little-endian, this is GUID/UUID type I think
 
@@ -535,6 +613,12 @@ void ElementForVersion(const int encodingVersion)
 {
     switch (encodingVersion)
     {
+    case 0:
+    case 1:
+    {
+        DmxElement_v1_t element <fgcolor=0x77cc22, read=Str("Type: %s; Name: %s;", this._type, this._name)>;
+        break;        
+    }
     case 2:
     case 3:
     {
@@ -565,17 +649,22 @@ struct ElementList_t(const int encodingVersion)
 };
 
 DmxHeader_t hdr <fgcolor=0xccef33>;
-Printf("attempting to parse dmx with encoding %s %i and format %s %i", hdr.encodingName, hdr.encodingVersion, hdr.formatName, hdr.formatVersion);
+Printf("attempting to parse dmx with encoding %s %i and format %s %i\n", hdr.encodingName, hdr.encodingVersion, hdr.formatName, hdr.formatVersion);
 
 if (hdr.encodingName != "binary")
 {
-    Printf("DMX encoding was %s instead of binary, which is currently unsupported", hdr.encodingName);
+    Printf("DMX encoding was %s instead of binary, which is currently unsupported\n", hdr.encodingName);
     return;
 }
 
 // create string dict
 switch (hdr.encodingVersion)
 {
+case 0:
+case 1:
+{
+    break;
+}
 case 2:
 case 3:
 {
