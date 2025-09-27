@@ -176,7 +176,7 @@ struct rle_bone(const uint8_t boneFlags, const int frameCount)
         }
         else
         {
-            Quaternion64 rot <fgcolor=cLtRed>;
+            Quaternion64 rot <fgcolor=cLtRed, read=ReadQuat64(this)>;
 
             localPos += 8;
         }
@@ -365,7 +365,7 @@ struct dp_anim(const uint64_t baseptr, const int animindex, const int frameCount
 
     FSeek(animbase);
     struct {
-        nibble boneFlag[boneCount] <optimize=false, read=ReadFlags(this, flags_animBone_r5)>;
+        nibble boneFlag[boneCount] <optimize=false, read=ReadFlags(this.bits, flags_animBone_r5)>;
     } boneFlags <fgcolor=0xaa8822>;
 
     FSeek(animbase + ParseRLEAnimationOffset(boneCount));
@@ -673,6 +673,14 @@ void ParseAnimdesc(const uint64_t baseptr, const int animindex)
     } anim <read=ReadString(startof(this.animdesc) + this.animdesc.sznameindex)>;
 }
 
+const string ReadEvent(mstudioevent_t& event)
+{
+    if (exists(event.options))
+        return Str("%s : %s", ReadString(startof(event) + GetOffset(event.szeventindex)), event.options);
+
+    return Str("%s : %s", ReadString(startof(event) + GetOffset(event.szeventindex)), ReadString(startof(event) + GetOffset(event.optionsindex)));
+}
+
 void ParseSeqdesc()
 {
     mstudioseqdesc_t seqdesc <fgcolor=0xf0b27a, read=Str("label: %s; activity: %s;", ReadString(startof(this) + this.szlabelindex), ReadString(startof(this) + this.szactivitynameindex))>;
@@ -704,7 +712,7 @@ void ParseSeqdesc()
     if(seqdesc.numevents)
     {
         FSeek(startof(seqdesc) + GetOffset(seqdesc.eventindex));
-        mstudioevent_t seqevent[seqdesc.numevents] <fgcolor=0x21fe7a, read=ReadString(startof(this) + this.szeventindex)>;
+        mstudioevent_t seqevent[seqdesc.numevents] <fgcolor=0x21fe7a, read=ReadEvent(this)>;
     }
     
     // auto layers

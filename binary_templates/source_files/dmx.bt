@@ -336,6 +336,7 @@ void CreateAttributeValue(char type, const int encodingVersion)
     case AT_VOID:
 	{    
         int value;
+        Assert(value == 0);
         return;
     }
     case AT_TIME:
@@ -435,7 +436,8 @@ void CreateAttributeValue(char type, const int encodingVersion)
         return;
     }
     case AT_VOID_ARRAY:
-	{    
+	{
+        Assert(false);
         return;
     }
     case AT_TIME_ARRAY:
