@@ -41,20 +41,29 @@ __int64 Align(__int64 a, __int64 b)
     return (((a)+((b)-1)) & ~((b)-1));
 }
 
+// 010 doesn't handle signed bitfields nicely
 const string ReadSignedBitfield(const uint64_t bitField, const uint8_t width)
 {
+    Assert(64 >= width);
     if (width == 1)
         return Str("%Lu", bitField);
 
-    // subtracting one here to get the index of our signed bit, and to get the number of our int bits
-    const uint8_t adjustedWidth = width - 1;
-    const uint64_t maskIntBits = (1 << (width - 1)) - 1;
-    const uint64_t maskSignBit = (1 << adjustedWidth);
+    const uint8_t maxBitIndex = width - 1;
+    const uint64_t maskSignBit = 1 << maxBitIndex;
+    const uint64_t maskBits = (1 << width) - 1;
+    const uint64_t maskBits64 = 0xFFFFFFFFFFFFFFFF;
 
-    local int64_t out = bitField & maskIntBits;
+    int64_t out = 0;
 
     if (bitField & maskSignBit)
-        out = -out;
+    {
+        out |= (bitField & maskBits); // copy the lower bits
+        out |= (maskBits64 & ~maskBits); // set the upper bits so it's negative in 64 bits
+    }
+    else
+    {
+        out = bitField;
+    }
 
     return Str("%Ld", out);
 }
