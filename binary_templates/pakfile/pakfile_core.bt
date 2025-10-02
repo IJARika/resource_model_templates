@@ -314,7 +314,7 @@ struct
             struct {
                 local int index = i;
                 HandleVERS(assets[index], pageoffsets);
-            } asset_vers <read=DefaultAssetName(assets[index]>;
+            } asset_vers <read=DefaultAssetName(assets[index])>;
 
             break;
         }
