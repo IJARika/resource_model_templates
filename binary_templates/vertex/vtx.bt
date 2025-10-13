@@ -5,7 +5,7 @@
 //   Authors: Valve
 //   Version: 7
 //   Purpose: Valve Mesh Strip File
-//  Category: Struct
+//  Category: Model
 // File Mask: *.vtx, *.sw.vtx, *.dx80.vtx, *.dx90.vtx, *.dx11.vtx
 //  ID Bytes: 07 00 00 00
 //   History: 

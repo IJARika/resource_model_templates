@@ -698,10 +698,12 @@ struct
 } attributes;
 
 // element tree
-void CreateElementTree(const int elementIdx, const int encodingVersion)
+void CreateElementTree(const int elementIdx, const int encodingVersion, const string sourceComment)
 {
     FSeek(startof(elementlist.element[elementIdx]));
-    struct (const int elementIdx, const int encodingVersion) {
+    struct (const int elementIdx, const int encodingVersion, const string srcCmt) {
+        const string sourceComment = srcCmt; // for labeling the source (attribute) of this branch
+
         FSeek(startof(elementlist.element[elementIdx]));
         ElementForVersion(encodingVersion);
 
@@ -710,35 +712,60 @@ void CreateElementTree(const int elementIdx, const int encodingVersion)
         
         local int attributeIdx = 0;
         local int arrayIdx = 0;
+
+        local int numElements = 0;
+        local int currentElement = -1;
         for(attributeIdx = 0; attributeIdx < attributelist.numAttributes; attributeIdx++)
         {
             switch(attributelist.attribute[attributeIdx].type)
             {
             case AT_ELEMENT:
-                if(attributelist.attribute[attributeIdx].value < 0)
+            {
+                currentElement = attributelist.attribute[attributeIdx].value;
+
+                if(currentElement < 0)
+                {
+                    Printf("skipped element with index of %i\n", currentElement);
+                    break;
+                }
+
+                CreateElementTree(currentElement, encodingVersion, Str("Attribute: %s", ReadStringDict(attributelist.attribute[attributeIdx].name)));
+                break;
+            }
+            case AT_ELEMENT_ARRAY:
+            {
+                numElements = attributelist.attribute[attributeIdx].numValues;
+
+                if(numElements == 0)
                     break;
 
-                CreateElementTree(attributelist.attribute[attributeIdx].value, encodingVersion);
-                break;
-            case AT_ELEMENT_ARRAY:
-                for(arrayIdx = 0; arrayIdx < attributelist.attribute[attributeIdx].numValues; arrayIdx++)
+                for(arrayIdx = 0; arrayIdx < numElements; arrayIdx++)
                 {
-                    if(attributelist.attribute[attributeIdx].values[arrayIdx] < 0)
-                        break;
-                    CreateElementTree(attributelist.attribute[attributeIdx].values[arrayIdx], encodingVersion);
+                    currentElement = attributelist.attribute[attributeIdx].values[arrayIdx];
+
+                    if(currentElement < 0)
+                    {
+                        Printf("skipped element with index of %i\n", currentElement);
+                        continue;
+                    }
+
+                    CreateElementTree(currentElement, encodingVersion, Str("Attribute: %s", ReadStringDict(attributelist.attribute[attributeIdx].name)));
                 }
                 break;
+            }
             default:
+            {
                 break;
+            }
             }
         }
 
-    } element_branch(elementIdx, encodingVersion) <read=Str("Type: %s; Name: %s; %i attributes;", this.element._type, this.element._name, this.attributelist.numAttributes)>;
+    } element_branch(elementIdx, encodingVersion, sourceComment) <read=Str("Type: %s; Name: %s; %i attributes;", this.element._type, this.element._name, this.attributelist.numAttributes), comment=sourceComment>;
 }
 
 struct ElementTree_t (const int encodingVersion)
 {
-    CreateElementTree(0, encodingVersion);
+    CreateElementTree(0, encodingVersion, "");
 };
 
 // actual tree structure
