@@ -13,10 +13,10 @@
 
 const uint32_t ID_FONT = 0x746E6F66;
 
-struct UIFont_UNK_t
+struct UIFontKerning_t
 {
-    int unk_0;
-    float unk_4;
+    int character; // 'otherChar' ??
+    float kerning; // 'kerningDistance'
 };
 
 // proportions
@@ -62,7 +62,9 @@ struct UIFontTexture_v7_t
 {
     // for kerning?
     float unk_0;
-    uint16_t unk_4;
+
+    uint16_t kerningStartIndex;
+
     uint8_t unk_6;
 
     uint8_t proportionIndex; // index into an array of two floats for different proportioned characters
@@ -141,8 +143,7 @@ struct UIFontHeader_v6_t
 
     PagePtr_t unicodeMap; // unicodes?
     PagePtr_t textures; // array of UIFontTexture_v7_t
-
-    PagePtr_t unk_38; // for kerning?
+    PagePtr_t kerning; //  // kerning info
 };
 
 struct UIFontHeader_v7_t
@@ -178,8 +179,7 @@ struct UIFontHeader_v7_t
 
     PagePtr_t proportions; // array of UIFontProportion_v7_t
     PagePtr_t textures; // array of UIFontTexture_v7_t
-
-    PagePtr_t unk_58; // for kerning?
+    PagePtr_t kerning; // kerning info
 };
 
 struct UIFontHeader_v12_t
@@ -225,7 +225,7 @@ struct UIFontHeader_v12_t
 
     PagePtr_t unk_80;
 
-    PagePtr_t unk_88;
+    PagePtr_t kerning; // kerning info
 };
 
 // asset header
@@ -366,38 +366,10 @@ struct font_data(local int version, local int64_t& baseptr)
         uint64_t glyphChunksMask[numChunkExtra];
     }
 
-    // some unknown data
-    local PagePtr_t unkPtr;
-    switch (version)
+    if (PtrIsValid(font.kerning))
     {
-    case 6:
-    {
-        unkPtr.index = font.unk_38.index;
-        unkPtr.offset = font.unk_38.offset;      
-
-        break;
-    }
-    case 7:
-    case 10:
-    {
-        unkPtr.index = font.unk_58.index;
-        unkPtr.offset = font.unk_58.offset;      
-
-        break;
-    }
-    case 12:
-    {
-        unkPtr.index = font.unk_88.index;
-        unkPtr.offset = font.unk_88.offset;      
-
-        break;
-    }
-    };
-
-    if (PtrIsValid(unkPtr))
-    {
-        PageSeek(unkPtr);
-        UIFont_UNK_t unk_0[font.numGlyphChunks]; // not correct for v12
+        PageSeek(font.kerning);
+        UIFontKerning_t kerningInfo[font.numGlyphChunks]; // not correct for v12
     }
 
     // textures

@@ -338,7 +338,7 @@ Assert(exists(hdr.animblockindex));
 if (hdr.numanimblocks)
 {
     FSeek(startof(hdr) + hdr.animblockindex);
-    mstudioanimblock_t animblocks[hdr.numanimblocks] <fgcolor=0xdc7633>;
+    mstudioanimblock_t animblocks[hdr.numanimblocks] <fgcolor=0xdc7633, read=Str("size: %i (%ik) bytes", (this.dataend - this.datastart), (this.dataend - this.datastart) >> 10)>;
 }
 #endif
 

@@ -1,0 +1,23 @@
+//------------------------------------------------
+//--- 010 Editor v12.0.1 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+#include "../source_math.bt"
+#include "../model/headers/studio_r5_h.bt"
+#include "../model/headers/studio_h.bt"
+#include "./headers/rseq_v12_1_h.bt"
+#include "./rseq.bt"
+
+boneCount = 126;
+const int numFrames = 29;
+
+rle_anim animation(0, 0, numFrames - 1);
