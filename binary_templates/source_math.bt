@@ -298,6 +298,12 @@ enum <uint8_t> MaterialShaderType_t
 	PTCU = 0x8,
 	PTCS = 0x9,
 	RGBS = 0xA,
+
+    _MATSHADERTYPE_COUNT,
+
+    _MATSHADERTYPE_COUNT_8 = 8, // before particle/sprite (vmt delete)
+    _MATSHADERTYPE_COUNT_9 = 9, // before ptcs ??
+    _MATSHADERTYPE_COUNT_10 = 10, // before stickers
 };
 
 // silly guy

@@ -1,0 +1,268 @@
+//------------------------------------------------
+//--- 010 Editor v12.0.1 Binary Template
+//
+//      File: pakfile_shdr.bt
+//   Authors: Rika
+//   Version: 0.1
+//   Purpose: Respawn Pak Files
+//  Category: Archive
+// File Mask: *.rpak
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+const uint32_t ID_SHDR = MakeFourCC('s', 'h', 'd', 'r');
+
+enum<uint8_t> eShaderType
+{
+    Pixel,
+    Vertex,
+    Geometry,
+    Hull,
+    Domain,
+    Compute,
+    Invalid,
+    // enum value '0x8', and '0x9' observed in shader version 15.
+};
+
+struct ShaderAssetHeader_v8_t
+{
+    PagePtr_t name;
+    eShaderType type;
+
+    char _pad[3] <hidden=true>;
+
+    int numShaders; // some count of sorts
+
+    PagePtr_t shaderPointer; // m_ppShader ? pointer to pointer of shader
+    PagePtr_t shaderInputFlags;
+};
+
+struct ShaderAssetHeader_v12_t
+{
+    PagePtr_t name;
+    eShaderType type;
+
+    char unk_9[7];
+
+    PagePtr_t shaderPointer; // m_ppShader ? pointer to pointer of shader
+    PagePtr_t shaderInputFlags;
+};
+
+struct ShaderAssetHeader_v13_t
+{
+    PagePtr_t name;
+    eShaderType type;
+
+    char unk_9[7];
+
+    PagePtr_t shaderPointer; // m_ppShader ? pointer to pointer of shader
+    PagePtr_t shaderInputFlags;
+
+    uint8_t unk_20[8]; // weird
+};
+
+// R5pc_r5-91_J214_CL1361852_2021_07_13_19_26 (s9 is v13, s10 is v15)
+struct ShaderAssetHeader_v14_t
+{
+    PagePtr_t name;
+    eShaderType type;
+
+    char unk_9[7];
+
+    PagePtr_t shaderPointer; // m_ppShader ? pointer to pointer of shader
+    PagePtr_t shaderInputFlags;
+
+    uint64_t unk_20; // weird
+
+    PagePtr_t unk_28; // unk_30 in v15
+};
+
+struct ShaderAssetHeader_v15_t
+{
+	PagePtr_t name;
+    eShaderType type;
+
+    char unk_9[9];
+
+    uint8_t unk_12[6];
+
+    union {
+        PagePtr_t shaderPointer; // m_ppShader ? pointer to pointer of shader
+        AssetGuid_t shaderParent;
+    } shader;
+    PagePtr_t shaderInputFlags;
+
+    uint64_t unk_28;
+
+    PagePtr_t unk_30;
+};
+
+struct ShaderAssetCPU_t(const eShaderType shaderType)
+{
+    PagePtr_t data;
+    int dataSize;
+
+    // has a pointer to some kind of extra dxbc
+    if (shaderType == Vertex)
+    {    
+        int vertexLayoutSize; // varies between shaders?
+        PagePtr_t vertexLayoutBlob;
+    }
+    else
+    {
+        int alignment <hidden=true>;
+        Assert(alignment == 0);
+    }
+};
+
+const int GetShaderCount_V12(char unk_9[])
+{
+    if (unk_9[0] != -1)
+    {    
+        return unk_9[0];
+    };
+    
+    local int v6 = 2 * ((unk_9[1] != 0) + 1);
+    if (!unk_9[2])
+        v6 = (unk_9[1] != 0) + 1;
+    
+    local int v7 = v6;
+    
+    if (unk_9[3])
+        v7 *= 2;
+    
+    local int numShaders = 2 * v7;
+    if (!unk_9[6])
+        numShaders = v7;
+
+    return numShaders;
+}
+
+const int GetShaderCount_V15(char unk_9[])
+{
+    local int shaderCount = unk_9[0];
+    if (shaderCount == -1)
+    {
+        shaderCount = (unk_9[1] != 0) + 1;
+    
+        if (unk_9[2])
+            shaderCount *= 2;
+        if (unk_9[3])
+            shaderCount *= 2;
+        if (unk_9[4])
+            shaderCount *= 2;
+        if (unk_9[7])
+            shaderCount *= 2;
+    }
+    
+    return shaderCount;
+}
+
+void ParseShaderCPU(int64_t& cpuPtr, const eShaderType shaderType)
+{
+    FSeek(cpuPtr);
+    ShaderAssetCPU_t cpu(shaderType);
+
+    cpuPtr += sizeof(cpu);
+
+    if (PtrIsValid(cpu.data) && cpu.dataSize)
+    {
+        PageSeek(cpu.data);
+        struct {
+            char data[cpu.dataSize];
+        } shaderBuffer;
+    }
+
+    if (shaderType == Vertex && PtrIsValid(cpu.vertexLayoutBlob) && cpu.vertexLayoutSize)
+    {
+        PageSeek(cpu.vertexLayoutBlob);
+        struct {
+            char data[cpu.vertexLayoutSize];
+        } vertexLayoutBlob;
+    }
+}
+
+void HandleSHDR(PakAsset_t& asset, uint64_t pageoffsets[])
+{
+    local int numShaders = 0;
+
+    PageSeek(asset.headPagePtr);
+    switch (asset.version)
+    {
+    case 8:
+    {
+        ShaderAssetHeader_v8_t hdr;
+        numShaders = hdr.numShaders;
+
+        break;
+    }
+    case 12:
+    {
+        ShaderAssetHeader_v12_t hdr;
+        numShaders = GetShaderCount_V12(hdr.unk_9);
+
+        break;
+    }
+    case 13:
+    {
+        ShaderAssetHeader_v13_t hdr;
+        numShaders = GetShaderCount_V12(hdr.unk_9);
+
+        break;
+    }
+    case 14:
+    {
+        ShaderAssetHeader_v14_t hdr;
+        numShaders = GetShaderCount_V12(hdr.unk_9);
+
+        break;
+    }
+    case 15:
+    {
+        ShaderAssetHeader_v15_t hdr;
+        numShaders = GetShaderCount_V15(hdr.unk_9);
+
+        break;
+    }
+    };
+
+    if (PtrIsValid(hdr.name))
+    {
+        PageSeek(hdr.name);
+        string name;
+    }
+
+    if (exists(hdr.shaderPointer) && PtrIsValid(hdr.shaderPointer))
+    {
+        PageSeek(hdr.shaderPointer);
+        int64_t shader_unk[2 * numShaders];
+    }
+    // will break on child shaders
+    else if (exists(hdr.shader) && PtrIsValid(hdr.shader.shaderPointer))
+    {
+        PageSeek(hdr.shader.shaderPointer);
+        int64_t shader_unk[3 * numShaders]; // larger in this version ?
+    }
+
+    if (PtrIsValid(hdr.shaderInputFlags))
+    {
+        const int numFlagsPerShader = hdr.type == Vertex ? 2 : 1; // eShaderType::Ver
+
+        PageSeek(hdr.shaderInputFlags);
+        int64_t inputFlags[numShaders * numFlagsPerShader];
+    }
+
+    // only one of these should be valid
+    if (PtrIsValid(asset.dataPagePtr))
+    {
+        PageSeek(asset.dataPagePtr);
+        local int64_t cpuPtr = FTell();
+
+        local int64_t shaderIndex = 0;
+        for (shaderIndex = 0; shaderIndex < numShaders; shaderIndex++)
+        {
+            ParseShaderCPU(cpuPtr, hdr.type);
+        }
+    }
+}

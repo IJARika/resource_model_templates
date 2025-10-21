@@ -141,7 +141,7 @@ string PageString(const PagePtr_t& ptr)
 
 string DefaultAssetName(const PakAsset_t& asset)
 {
-    return Str("%s - 0x%LX", asset.type.text, asset.guid);
+    return Str("<%s> <0x%8LX>", asset.type.text, asset.guid);
 }
 
 string GetAssetName(const PakAsset_t& asset, const PagePtr_t& ptr)
@@ -149,7 +149,7 @@ string GetAssetName(const PakAsset_t& asset, const PagePtr_t& ptr)
     if (!PtrIsValid(ptr))
         return DefaultAssetName(asset);
 
-    return ReadString(PageTell(ptr));
+    return Str("<%s> <0x%8LX>", ReadString(PageTell(ptr)), asset.guid);
 }
 
 string GetAssetNameFull(const PakAsset_t& asset, const PagePtr_t& ptr, const string prefix, const string suffix)
@@ -167,6 +167,8 @@ string GetAssetNameFull(const PakAsset_t& asset, const PagePtr_t& ptr, const str
     const int suffixOffset = Strlen(name) - suffixLength;
     if (Strncmp(SubStr(name, suffixOffset, suffixLength), suffix, suffixLength))
         name = Str("%s%s", name, suffix);
+
+    name = Str("<%s> <0x%8LX>", name, asset.guid);
 
     return name;
 }
@@ -201,6 +203,9 @@ struct {
 #include "./pakfile_ui.bt"
 #include "./pakfile_Ptch.bt"
 #include "./pakfile_vers.bt"
+#include "./pakfile_shdr.bt"
+#include "./pakfile_shds.bt"
+#include "./pakfile_hsys.bt"
 
 FSeek(startof(page_data));
 struct
@@ -224,7 +229,7 @@ struct
             struct {
                 local int index = i;
                 HandleMaterial(assets[index], pageoffsets);
-            } asset_matl <read = GetAssetName(assets[index], this.hdr.name)>;
+            } asset_matl <read = GetAssetNameFull(assets[index], this.hdr.name, "material", ".rpak")>;
 
             break;
         }
@@ -315,6 +320,33 @@ struct
                 local int index = i;
                 HandleVERS(assets[index], pageoffsets);
             } asset_vers <read=DefaultAssetName(assets[index])>;
+
+            break;
+        }
+        case ID_SHDR:
+        {
+            struct {
+                local int index = i;
+                HandleSHDR(assets[index], pageoffsets);
+            } asset_shdr <read=GetAssetNameFull(assets[index], this.hdr.name, "shader", ".rpak")>;
+
+            break;
+        }
+        case ID_SHDS:
+        {
+            struct {
+                local int index = i;
+                HandleSHDS(assets[index], pageoffsets);
+            } asset_shds <read=GetAssetNameFull(assets[index], this.hdr.name, "shaderset", ".rpak")>;
+
+            break;
+        }
+        case ID_HSYS:
+        {
+            struct {
+                local int index = i;
+                HandleHSYS(assets[index], pageoffsets);
+            } asset_hsys <read=DefaultAssetName(assets[index])>;
 
             break;
         }

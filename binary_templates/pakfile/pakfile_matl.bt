@@ -17,7 +17,7 @@ struct MaterialAssetCPU_t
 {
 	PagePtr_t data;
 	int dataSize;
-	int unk_C; // varies between shaders?
+	int unk_C;
 };
 
 struct MaterialBlendState_t
@@ -75,14 +75,14 @@ struct MaterialAssetHeader_v12_t
 	PagePtr_t surfaceProp <read = PageString(this)>; // pointer to surfaceprop (as defined in surfaceproperties.txt)
 	PagePtr_t surfaceProp2 <read = PageString(this)>; // pointer to surfaceprop2 
 
-	uint64_t depthShadowMaterial;
-	uint64_t depthPrepassMaterial;
-	uint64_t depthVSMMaterial;
-	uint64_t colpassMaterial;
+	AssetGuid_t depthShadowMaterial;
+	AssetGuid_t depthPrepassMaterial;
+	AssetGuid_t depthVSMMaterial;
+	AssetGuid_t colpassMaterial;
 
 	MaterialDXState_v12_t dxStates[2];
 
-	uint64_t shaderSet; // guid of the shaderset asset that this material uses
+	AssetGuid_t shaderSet; // guid of the shaderset asset that this material uses
 
 	PagePtr_t textureHandles; // TextureGUID Map
 	PagePtr_t streamingTextureHandles; // Streamable TextureGUID Map
@@ -117,13 +117,13 @@ struct MaterialAssetHeader_v15_t
 	PagePtr_t surfaceProp; // pointer to surfaceprop (as defined in surfaceproperties.rson)
 	PagePtr_t surfaceProp2; // pointer to surfaceprop2 
 
-	uint64_t depthShadowMaterial;
-	uint64_t depthPrepassMaterial;
-	uint64_t depthVSMMaterial;
-	uint64_t depthShadowTightMaterial;
-	uint64_t colpassMaterial;
+	AssetGuid_t depthShadowMaterial;
+	AssetGuid_t depthPrepassMaterial;
+	AssetGuid_t depthVSMMaterial;
+	AssetGuid_t depthShadowTightMaterial;
+	AssetGuid_t colpassMaterial;
 
-	uint64_t shaderSet; // guid of the shaderset asset that this material uses
+	AssetGuid_t shaderSet; // guid of the shaderset asset that this material uses
 
 	PagePtr_t textureHandles; // ptr to array of texture guids
 	PagePtr_t streamingTextureHandles; // ptr to array of streamable texture guids (empty at build time)
@@ -154,7 +154,7 @@ struct MaterialAssetHeader_v15_t
 
 	char pad_00F4[0x4];
 
-	uint64_t textureAnimation;
+	AssetGuid_t textureAnimation;
 };
 
 // [rika]: I think we're on version 23 of matl now and this still works. v22 and v23 are 256 bytes, everything else is below is the same?
@@ -169,13 +169,13 @@ struct MaterialAssetHeader_v16_t
 	PagePtr_t surfaceProp; // pointer to surfaceprop (as defined in surfaceproperties.rson)
 	PagePtr_t surfaceProp2; // pointer to surfaceprop2 
 
-	uint64_t depthShadowMaterial;
-	uint64_t depthPrepassMaterial;
-	uint64_t depthVSMMaterial;
-	uint64_t depthShadowTightMaterial;
-	uint64_t colpassMaterial;
+	AssetGuid_t depthShadowMaterial;
+	AssetGuid_t depthPrepassMaterial;
+	AssetGuid_t depthVSMMaterial;
+	AssetGuid_t depthShadowTightMaterial;
+	AssetGuid_t colpassMaterial;
 
-	uint64_t shaderSet; // guid of the shaderset asset that this material uses
+	AssetGuid_t shaderSet; // guid of the shaderset asset that this material uses
 
 	PagePtr_t textureHandles; // ptr to array of texture guids
 	PagePtr_t streamingTextureHandles; // ptr to array of streamable texture guids (empty at build time)
@@ -208,7 +208,7 @@ struct MaterialAssetHeader_v16_t
 
 	int unk_CC;
 
-	uint64_t textureAnimation;
+	AssetGuid_t textureAnimation;
 
 	int unk_D8[4];
 
@@ -227,13 +227,13 @@ struct MaterialAssetHeader_v22_t
 	PagePtr_t surfaceProp; // pointer to surfaceprop (as defined in surfaceproperties.rson)
 	PagePtr_t surfaceProp2; // pointer to surfaceprop2 
 
-	uint64_t depthShadowMaterial;
-	uint64_t depthPrepassMaterial;
-	uint64_t depthVSMMaterial;
-	uint64_t depthShadowTightMaterial;
-	uint64_t colpassMaterial;
+	AssetGuid_t depthShadowMaterial;
+	AssetGuid_t depthPrepassMaterial;
+	AssetGuid_t depthVSMMaterial;
+	AssetGuid_t depthShadowTightMaterial;
+	AssetGuid_t colpassMaterial;
 
-	uint64_t shaderSet; // guid of the shaderset asset that this material uses
+	AssetGuid_t shaderSet; // guid of the shaderset asset that this material uses
 
 	PagePtr_t textureHandles; // ptr to array of texture guids
 	PagePtr_t streamingTextureHandles; // ptr to array of streamable texture guids (empty at build time)
@@ -266,7 +266,7 @@ struct MaterialAssetHeader_v22_t
 
 	int unk_CC;
 
-	uint64_t textureAnimation;
+	AssetGuid_t textureAnimation;
 
 	int unk_D8[4];
 
@@ -281,7 +281,7 @@ struct MaterialAssetHeader_v23_1_t
 {
 	uint64_t unk_0; // same as previous version (as of v23), does not seem to be vtftableReserved (contains data)
 
-	uint64_t snapshotMaterial; // msnp guid
+	AssetGuid_t snapshotMaterial; // msnp guid
 
 	uint64_t guid; // guid of this material asset
 
@@ -289,13 +289,13 @@ struct MaterialAssetHeader_v23_1_t
 	PagePtr_t surfaceProp; // pointer to surfaceprop (as defined in surfaceproperties.rson)
 	PagePtr_t surfaceProp2; // pointer to surfaceprop2 
 
-	uint64_t depthShadowMaterial;
-	uint64_t depthPrepassMaterial;
-	uint64_t depthVSMMaterial;
-	uint64_t depthShadowTightMaterial;
-	uint64_t colpassMaterial;
+	AssetGuid_t depthShadowMaterial;
+	AssetGuid_t depthPrepassMaterial;
+	AssetGuid_t depthVSMMaterial;
+	AssetGuid_t depthShadowTightMaterial;
+	AssetGuid_t colpassMaterial;
 
-	uint64_t shaderSet; // guid of the shaderset asset that this material uses
+	AssetGuid_t shaderSet; // guid of the shaderset asset that this material uses
 
 	PagePtr_t textureHandles; // ptr to array of texture guids
 	PagePtr_t streamingTextureHandles; // ptr to array of streamable texture guids (empty at build time)
@@ -327,7 +327,7 @@ struct MaterialAssetHeader_v23_1_t
 
     float unk_A4; // unk_E8?
 
-	uint64_t textureAnimation;
+	AssetGuid_t textureAnimation;
 
 	char unk_B0[8]; // unk_F0 ?
 
@@ -338,7 +338,7 @@ struct MaterialAssetHeader_v23_2_t
 {
 	uint64_t unk_0; // same as previous version (as of v23), does not seem to be vtftableReserved (contains data)
 
-	uint64_t snapshotMaterial; // msnp guid
+	AssetGuid_t snapshotMaterial; // msnp guid
 
 	uint64_t guid; // guid of this material asset
 
@@ -346,13 +346,13 @@ struct MaterialAssetHeader_v23_2_t
 	PagePtr_t surfaceProp; // pointer to surfaceprop (as defined in surfaceproperties.rson)
 	PagePtr_t surfaceProp2; // pointer to surfaceprop2 
 
-	uint64_t depthShadowMaterial;
-	uint64_t depthPrepassMaterial;
-	uint64_t depthVSMMaterial;
-	uint64_t depthShadowTightMaterial;
-	uint64_t colpassMaterial;
+	AssetGuid_t depthShadowMaterial;
+	AssetGuid_t depthPrepassMaterial;
+	AssetGuid_t depthVSMMaterial;
+	AssetGuid_t depthShadowTightMaterial;
+	AssetGuid_t colpassMaterial;
 
-	uint64_t shaderSet; // guid of the shaderset asset that this material uses
+	AssetGuid_t shaderSet; // guid of the shaderset asset that this material uses
 
 	PagePtr_t textureHandles; // ptr to array of texture guids
 	PagePtr_t streamingTextureHandles; // ptr to array of streamable texture guids (empty at build time)
@@ -384,7 +384,7 @@ struct MaterialAssetHeader_v23_2_t
 
     float unk_A4; // unk_E8?
 
-	uint64_t textureAnimation;
+	AssetGuid_t textureAnimation;
 
 	char unk_B0[8]; // unk_F0 ?
 
@@ -447,8 +447,11 @@ void HandleMaterial(PakAsset_t& asset, uint64_t pageoffsets[])
     PageSeek(hdr.name);
     string name;
 
-    PageSeek(hdr.surfaceProp);
-    string surfaceProp;
+    if (PtrIsValid(hdr.surfaceProp))
+    {
+        PageSeek(hdr.surfaceProp);
+        string surfaceProp;
+    } 
 
     if (PtrIsValid(hdr.surfaceProp2))
     {

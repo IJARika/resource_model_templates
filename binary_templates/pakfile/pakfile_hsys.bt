@@ -1,0 +1,127 @@
+//------------------------------------------------
+//--- 010 Editor v12.0.1 Binary Template
+//
+//      File: pakfile_hsys.bt
+//   Authors: Rika
+//   Version: 0.1
+//   Purpose: Respawn Pak Files
+//  Category: Archive
+// File Mask: *.rpak
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+const uint32_t ID_HSYS = MakeFourCC('h', 's', 'y', 's');
+
+struct HighlightSystemAssetHeader_v2_t
+{
+    AssetGuid_t geometryMaterialFIX;
+    AssetGuid_t geometryMaterialSKN;
+
+    AssetGuid_t clearPixelShader;
+    AssetGuid_t postProcessVertexShader;
+
+    AssetGuid_t gatherHorizontalPixelShader;
+    AssetGuid_t gatherVerticalPixelShader;
+
+    AssetGuid_t composePixelShader;
+    AssetGuid_t blendPixelShader;
+};
+
+struct HighlightSystemAssetHeader_v3_t
+{
+    // each is a material type indice
+    AssetGuid_t geometryMaterial[_MATSHADERTYPE_COUNT_8];
+    AssetGuid_t geometryMaterialEBW[_MATSHADERTYPE_COUNT_8]; // extra bone weights
+
+    AssetGuid_t clearPixelShader;
+    AssetGuid_t postProcessVertexShader;
+
+    AssetGuid_t gatherHorizontalPixelShader;
+    AssetGuid_t gatherVerticalPixelShader;
+
+    AssetGuid_t composePixelShader;
+    AssetGuid_t blendPixelShader;
+};
+
+struct HighlightSystemAssetHeader_v4_t
+{
+    // each is a material type indice
+    AssetGuid_t geometryMaterial[_MATSHADERTYPE_COUNT_9];
+    AssetGuid_t geometryMaterialEBW[_MATSHADERTYPE_COUNT_9]; // extra bone weights
+
+    AssetGuid_t clearPixelShader;
+    AssetGuid_t postProcessVertexShader;
+
+    AssetGuid_t gatherHorizontalPixelShader;
+    AssetGuid_t gatherVerticalPixelShader;
+
+    AssetGuid_t composePixelShader;
+    AssetGuid_t blendPixelShader;
+};
+
+struct HighlightSystemAssetHeader_v5_t
+{
+    // each is a material type indice
+    AssetGuid_t geometryMaterial[_MATSHADERTYPE_COUNT_10];
+    AssetGuid_t geometryMaterialEBW[_MATSHADERTYPE_COUNT_10]; // extra bone weights
+
+    AssetGuid_t clearPixelShader;
+    AssetGuid_t postProcessVertexShader;
+
+    AssetGuid_t gatherHorizontalPixelShader;
+    AssetGuid_t gatherVerticalPixelShader;
+
+    AssetGuid_t composePixelShader;
+    AssetGuid_t blendPixelShader;
+};
+
+struct HighlightSystemAssetHeader_v5_1_t
+{
+    // each is a material type indice
+    AssetGuid_t geometryMaterial[_MATSHADERTYPE_COUNT];
+    AssetGuid_t geometryMaterialEBW[_MATSHADERTYPE_COUNT]; // extra bone weights
+
+    AssetGuid_t clearPixelShader;
+    AssetGuid_t postProcessVertexShader;
+
+    AssetGuid_t gatherHorizontalPixelShader;
+    AssetGuid_t gatherVerticalPixelShader;
+
+    AssetGuid_t composePixelShader;
+    AssetGuid_t blendPixelShader;
+};
+
+void HandleHSYS(PakAsset_t& asset, uint64_t pageoffsets[])
+{
+    PageSeek(asset.headPagePtr);
+    switch (asset.version)
+    {
+    case 2:
+    {
+        HighlightSystemAssetHeader_v2_t hdr;
+        break;
+    }
+    case 3:
+    {
+        HighlightSystemAssetHeader_v3_t hdr;
+        break;
+    }
+    case 4:
+    {
+        HighlightSystemAssetHeader_v4_t hdr;
+        break;
+    }
+    case 5:
+    {
+        if (asset.headerStructSize == sizeof(HighlightSystemAssetHeader_v5_1_t))
+        {
+            HighlightSystemAssetHeader_v5_1_t hdr;
+            break;
+        }
+
+        HighlightSystemAssetHeader_v5_t hdr;
+        break;
+    }
+    };
+}

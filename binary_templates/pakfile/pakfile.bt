@@ -41,6 +41,12 @@ bool PtrIsValid(const PagePtr_t& ptr)
     if (ptr.index < 0 || ptr.offset < 0)
         return false;
 
+    if (ptr.index >= pakhdr.numPages)
+        return false;
+
+    if (ptr.offset >= pages[ptr.index].size)
+        return false;
+
     return true;
 }
 

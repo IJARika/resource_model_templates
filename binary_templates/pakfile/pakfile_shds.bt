@@ -1,0 +1,151 @@
+//------------------------------------------------
+//--- 010 Editor v12.0.1 Binary Template
+//
+//      File: pakfile_shds.bt
+//   Authors: Rika
+//   Version: 0.1
+//   Purpose: Respawn Pak Files
+//  Category: Archive
+// File Mask: *.rpak
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+const uint32_t ID_SHDS = MakeFourCC('s', 'h', 'd', 's');
+
+#define MAX_SHADERS_PER_ASSET_R2 32
+
+struct ShaderSetAssetHeader_v8_t
+{
+	uint64_t reserved_vftable;
+
+	PagePtr_t name;
+
+	uint64_t reserved_inputFlags;
+
+	uint16_t textureInputCounts[2];
+
+	uint16_t numSamplers;
+
+	uint16_t firstResourceBindPoint;
+	uint16_t numResources;
+
+	// reserved array for storing the index of input layout for each of the VS asset's shaders
+	// set to 0xFF if there is no shader present for the respective index in this array
+	uint8_t reserved_vsInputLayoutIds[MAX_SHADERS_PER_ASSET_R2];
+
+    char _alignment[6] <hidden=true>;
+
+	AssetGuid_t vertexShader;
+	AssetGuid_t pixelShader;
+};
+
+struct ShaderSetAssetHeader_v11_t
+{
+	uint64_t reserved_vftable;
+
+	PagePtr_t name;
+
+	uint64_t reserved_inputFlags;
+
+	uint16_t textureInputCounts[2];
+
+	uint16_t numSamplers;
+
+	uint8_t firstResourceBindPoint;
+	uint8_t numResources;
+
+	// reserved array for storing the index of input layout for each of the VS asset's shaders
+	uint8_t reserved_vsInputLayoutIds[16];
+
+	AssetGuid_t vertexShader;
+	AssetGuid_t pixelShader;
+};
+
+// [rika]: newer versions of v13 use this header, seemingly omitting unk_40
+struct ShaderSetAssetHeader_v12_t
+{
+	uint64_t reserved_vftable;
+
+	PagePtr_t name;
+
+	uint64_t reserved_inputFlags;
+
+	uint16_t textureInputCounts[2];
+
+	uint16_t numSamplers;
+
+	uint8_t firstResourceBindPoint;
+	uint8_t numResources;
+
+	// reserved array for storing the index of input layout for each of the VS asset's shaders
+	uint8_t reserved_vsInputLayoutIds[32];
+
+	AssetGuid_t vertexShader;
+	AssetGuid_t pixelShader;
+};
+
+struct ShaderSetAssetHeader_v13_t
+{
+	uint64_t reserved_vftable;
+
+	PagePtr_t name;
+
+	uint64_t reserved_inputFlags;
+
+	uint16_t textureInputCounts[2];
+
+	uint16_t numSamplers;
+
+	uint8_t firstResourceBindPoint;
+	uint8_t numResources;
+
+	// reserved array for storing the index of input layout for each of the VS asset's shaders
+	// [rika] dunno what these are supposed to look like, please check this later rexx. they might've just extended this array
+	uint8_t reserved_vsInputLayoutIds[32];
+
+	uint8_t unk_40[32];
+
+	AssetGuid_t vertexShader;
+	AssetGuid_t pixelShader;
+};
+
+void HandleSHDS(PakAsset_t& asset, uint64_t pageoffsets[])
+{
+    PageSeek(asset.headPagePtr);
+    switch (asset.version)
+    {
+    case 8:
+    {
+        ShaderSetAssetHeader_v8_t hdr;
+        break;
+    }
+    case 11:
+    {
+        ShaderSetAssetHeader_v12_t hdr;
+        break;
+    }
+    case 12:
+    {
+        ShaderSetAssetHeader_v12_t hdr;
+        break;
+    }
+    case 13:
+    {
+        if (asset.headerStructSize == sizeof(ShaderSetAssetHeader_v12_t))
+        {
+            ShaderSetAssetHeader_v12_t hdr;
+            break;
+        }
+
+        ShaderSetAssetHeader_v13_t hdr;
+        break;
+    }
+    };
+
+    if (PtrIsValid(hdr.name))
+    {
+        PageSeek(hdr.name);
+        string name;
+    }
+}
