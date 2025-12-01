@@ -588,13 +588,15 @@ const int GetSectionCount(mstudioanimdesc_t& animdesc)
     const int useTrailSection = (animdesc.flags & STUDIO_DATAPOINTANIM) ? false : true;
 
     local int useStallSection = 0;
+    local int sectionStallFrames = 0;
 #ifndef FEATURE_EXTERNAL_ANIM
 #ifdef FEATURE_STALL
     useStallSection = animdesc.sectionstallframes ? true : false;
+    sectionStallFrames = animdesc.sectionstallframes;
 #endif
 #endif
 
-    const int sectionbase = (animdesc.numframes - animdesc.sectionstallframes - 1) / animdesc.sectionframes; // subtract one to get the max frame index
+    const int sectionbase = (animdesc.numframes - sectionStallFrames - 1) / animdesc.sectionframes; // subtract one to get the max frame index
     const int sectionindex = sectionbase + useTrailSection + useStallSection; // add the trailing section and stall section
     return sectionindex + 1; // make this index a count
 }

@@ -72,7 +72,7 @@ struct rle_bone(const int frameCount)
     {
         if (header.flags & STUDIO_ANIM_RAWROT)
         {
-            Quaternion64 rot <fgcolor=cLtRed>;
+            Quaternion64 rot <fgcolor=cLtRed, read=ReadQuat64(this)>;
         }
         else
         {
@@ -146,7 +146,7 @@ struct rle_bone(const int frameCount)
     FSeek(localPos);
     if (header.flags & STUDIO_ANIM_RAWROT2)
     {
-        Quaternion64 rot <fgcolor=cLtRed>;
+        Quaternion64 rot <fgcolor=cLtRed, read=ReadQuat64(this)>;
 
         localPos += sizeof(Quaternion64);
     }
@@ -178,7 +178,7 @@ struct rle_anim(const uint64_t baseptr, const int animindex, const int frameCoun
     local int boneIdx = 0;
     for (boneIdx = 0; boneIdx < boneCount; boneIdx++)
     {
-        rle_bone bone(frameCount);
+        rle_bone bone(frameCount) <read=ReadString(startof(bones[this.header.bone]) + bones[this.header.bone].sznameindex)>;
 
         if (!bone.header.nextoffset)
             break;
@@ -533,7 +533,7 @@ struct ZeroFrameBone_t(const int boneIdx)
         Vector48 pos;
 
     if(bones[boneIdx].flags & BONE_HAS_SAVEFRAME_ROT64)
-        Quaternion64 rot;
+        Quaternion64 rot <read=ReadQuat64(this)>;
 
     if(bones[boneIdx].flags & BONE_HAS_SAVEFRAME_ROT32)
         Quaternion32 rot;
@@ -669,7 +669,7 @@ void ParseAnimdesc(const uint64_t baseptr, const int animindex)
             for(j = 0; j < animdesc.numikrules; j++)
             {
                 FSeek(startof(animdesc) + animdesc.ikruleindex + (sizeof(mstudioikrule_t) * j));
-                anim_ikrule ikrule(animdesc.numframes - 1);
+                anim_ikrule ikrule(animdesc.numframes - 1) <read=Str("type: %s bone: %s chain: %s", ReadEnum(this.ikrule.type, enum_ikrule_all), ReadString(startof(bones[this.ikrule.bone]) + bones[this.ikrule.bone].sznameindex), ReadString(startof(ikchains.ikchain[this.ikrule.chain].ikchain) + ikchains.ikchain[this.ikrule.chain].ikchain.sznameindex))>;
             }
         }
 

@@ -248,10 +248,29 @@ struct mstudioanimblock_t
 };
 #endif
 
+local FlagArray_t flags_movement_all(32, "NONE");
+InitFlagEntry(flags_movement_all, "STUDIO_X",   0x1);
+InitFlagEntry(flags_movement_all, "STUDIO_Y",   0x2);
+InitFlagEntry(flags_movement_all, "STUDIO_Z",   0x4);
+InitFlagEntry(flags_movement_all, "STUDIO_XR",  0x8);
+InitFlagEntry(flags_movement_all, "STUDIO_YR",  0x10);
+InitFlagEntry(flags_movement_all, "STUDIO_ZR",  0x20);
+
+InitFlagEntry(flags_movement_all, "STUDIO_LX",  0x40);
+InitFlagEntry(flags_movement_all, "STUDIO_LY",  0x80);
+InitFlagEntry(flags_movement_all, "STUDIO_LZ",  0x100);
+InitFlagEntry(flags_movement_all, "STUDIO_LXR", 0x200);
+InitFlagEntry(flags_movement_all, "STUDIO_LYR", 0x400);
+InitFlagEntry(flags_movement_all, "STUDIO_LZR", 0x800);
+
+InitFlagEntry(flags_movement_all, "STUDIO_LINEAR",  0x1000);
+InitFlagEntry(flags_movement_all, "STUDIO_QUADRATIC_MOTION", 0x2000);
+InitFlagEntry(flags_movement_all, "STUDIO_RLOOP",   0x40000);
+
 struct mstudiomovement_t
 {
 	int endframe;
-	int motionflags;
+	int motionflags <read=ReadFlags(this, flags_movement_all)>;
 	float v0;			// velocity at start of block
 	float v1;			// velocity at end of block
 	float angle;		// YAW rotation at end of this blocks movement
@@ -278,6 +297,14 @@ struct mstudiocompressedikerror_t
 	float scale[6];
 	short offset[6];
 };
+
+local FlagArray_t enum_ikrule_all(32, "NONE");
+InitEnumEntry(enum_ikrule_all, "IK_SELF",       1);
+InitEnumEntry(enum_ikrule_all, "IK_WORLD",      2);
+InitEnumEntry(enum_ikrule_all, "IK_GROUND",     3);
+InitEnumEntry(enum_ikrule_all, "IK_RELEASE",    4);
+InitEnumEntry(enum_ikrule_all, "IK_ATTACHMENT", 5);
+InitEnumEntry(enum_ikrule_all, "IK_UNLATCH",    6);
 
 struct mstudioevent_t
 {

@@ -287,9 +287,16 @@ void CreateAttributeValue(char type, const int encodingVersion)
         return;
     }
     case AT_ELEMENT:
-	{    
-        int value <read=elementlist.element[this]._name>; // whar, element idx?
-        // size of 0, do nothing
+	{
+        struct {
+            int index;
+            
+            if (index == -2)
+            {
+                string guid;
+            }
+        } value <read=(this.index >= 0 ? elementlist.element[this.index]._name : "missing/invalid")>;
+
         return;
     }
     case AT_INT:
@@ -411,8 +418,15 @@ void CreateAttributeValue(char type, const int encodingVersion)
 	switch (type)
     {
     case AT_ELEMENT_ARRAY:
-	{    
-        int values[numValues] <read=elementlist.element[this]._name>;
+	{
+        struct {
+            int index;
+            
+            if (index == -2)
+            {
+                string guid;
+            }
+        } values[numValues] <read=(this.index >= 0 ? elementlist.element[this.index]._name : "missing"), optimize=false>;
         return;
     }
     case AT_INT_ARRAY:
@@ -721,7 +735,7 @@ void CreateElementTree(const int elementIdx, const int encodingVersion, const st
             {
             case AT_ELEMENT:
             {
-                currentElement = attributelist.attribute[attributeIdx].value;
+                currentElement = attributelist.attribute[attributeIdx].value.index;
 
                 if(currentElement < 0)
                 {
@@ -741,7 +755,7 @@ void CreateElementTree(const int elementIdx, const int encodingVersion, const st
 
                 for(arrayIdx = 0; arrayIdx < numElements; arrayIdx++)
                 {
-                    currentElement = attributelist.attribute[attributeIdx].values[arrayIdx];
+                    currentElement = attributelist.attribute[attributeIdx].values[arrayIdx].index;
 
                     if(currentElement < 0)
                     {

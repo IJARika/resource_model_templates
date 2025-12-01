@@ -319,17 +319,19 @@ const uint32_t popcount64 (uint64_t n) {
 struct FlagEntry_t
 {
     local string value;
-    local bool valid = false;
+    local int valid = false;
 };
 
-struct FlagArray_t(const int size, const string noneString)
+struct FlagArray_t(const int numMaxEntries, const string noneString)
 {
-    local const int length = size;
     local const string none = noneString;
+    local const int capacity = numMaxEntries;
+    local int size = 0;
 
-    FlagEntry_t strings[length] <optimize=false>;
+    FlagEntry_t strings[capacity] <optimize=false>;
 };
 
+// flag array as flags
 void InitFlagEntry(FlagArray_t& flagList, const string value, const uint64_t flag)
 {
     const uint64_t mask = flag - 1;
@@ -338,6 +340,7 @@ void InitFlagEntry(FlagArray_t& flagList, const string value, const uint64_t fla
 
     flagList.strings[indice].value = value;
     flagList.strings[indice].valid = true;
+    flagList.size++;
 }
 
 string ReadFlags(const uint64_t flags, FlagArray_t& flagList)
@@ -351,7 +354,7 @@ string ReadFlags(const uint64_t flags, FlagArray_t& flagList)
     }
 
     local bool hasFlags = false;
-    for (i = 0; i < flagList.length; i++)
+    for (i = 0; i < flagList.capacity; i++)
     {
         if (!(flags & (1 << i)))
             continue;
@@ -371,6 +374,31 @@ string ReadFlags(const uint64_t flags, FlagArray_t& flagList)
         hasFlags = true;
     }
 
+    return flagString;
+}
+
+// flag array as enum (sure you could use enum type, but the size changes often!)
+void InitEnumEntry(FlagArray_t& flagList, const string value, const int index)
+{
+    flagList.strings[flagList.size].value = value;
+    flagList.strings[flagList.size].valid = index;
+    flagList.size++;
+}
+
+string ReadEnum(const int value, FlagArray_t& flagList)
+{
+    local string flagString = Str("(%i) ", value);
+
+    for (i = 0; i < flagList.size; i++)
+    {
+        if (value != flagList.strings[i].valid)
+            continue;
+
+        flagString += flagList.strings[i].value;
+        return flagString;
+    }
+
+    flagString += "INVALID";
     return flagString;
 }
 

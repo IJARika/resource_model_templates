@@ -110,6 +110,25 @@ struct ShaderSetAssetHeader_v13_t
 	AssetGuid_t pixelShader;
 };
 
+struct ShaderSetAssetHeader_v14_t
+{
+	uint64_t reserved_vftable;
+
+	PagePtr_t name;
+
+	uint16_t textureInputCounts[2];
+
+	uint16_t numSamplers;
+
+	uint8_t firstResourceBindPoint;
+	uint8_t numResources;
+
+	uint8_t unk_28[24];
+
+	AssetGuid_t vertexShader;
+	AssetGuid_t pixelShader;
+};
+
 void HandleSHDS(PakAsset_t& asset, uint64_t pageoffsets[])
 {
     PageSeek(asset.headPagePtr);
@@ -139,6 +158,11 @@ void HandleSHDS(PakAsset_t& asset, uint64_t pageoffsets[])
         }
 
         ShaderSetAssetHeader_v13_t hdr;
+        break;
+    }
+    case 14:
+    {
+        ShaderSetAssetHeader_v14_t hdr;
         break;
     }
     };

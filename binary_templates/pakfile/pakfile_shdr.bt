@@ -225,6 +225,13 @@ void HandleSHDR(PakAsset_t& asset, uint64_t pageoffsets[])
 
         break;
     }
+    case 16:
+    {
+        ShaderAssetHeader_v15_t hdr;
+        numShaders = GetShaderCount_V15(hdr.unk_9); // does not work for v16
+
+        break;
+    }
     };
 
     if (PtrIsValid(hdr.name))

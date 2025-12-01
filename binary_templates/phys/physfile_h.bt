@@ -70,7 +70,7 @@ struct compactledge_t
 struct compactedge_t
 {
 	unsigned int	start_point_index : 16; // point index
-	int				opposite_index : 15; // rel to this // maybe extra array, 3 bits more than tri_index/pierce_index
+	int				opposite_index : 15 <read=ReadSignedBitfield(this, 15)>; // rel to this // maybe extra array, 3 bits more than tri_index/pierce_index
 	unsigned int	is_virtual : 1;
 };
 
