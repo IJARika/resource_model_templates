@@ -582,7 +582,9 @@ struct mstudioeyeball_t
 // todo bspflags.h
 local FlagArray_t flags_contents_all(32, "CONTENTS_EMPTY");
 InitFlagEntry(flags_contents_all, "CONTENTS_SOLID",     0x1);
+InitFlagEntry(flags_contents_all, "CONTENTS_WINDOW",    0x2);
 InitFlagEntry(flags_contents_all, "CONTENTS_GRATE",     0x8);
+InitFlagEntry(flags_contents_all, "CONTENTS_WATER",     0x20);
 InitFlagEntry(flags_contents_all, "CONTENTS_MONSTER",   0x2000000);
 InitFlagEntry(flags_contents_all, "CONTENTS_LADDER",    0x20000000);
 
