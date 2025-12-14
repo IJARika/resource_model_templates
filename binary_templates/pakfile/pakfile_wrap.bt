@@ -1,0 +1,86 @@
+//------------------------------------------------
+//--- 010 Editor v12.0.1 Binary Template
+//
+//      File: pakfile_wrap.bt
+//   Authors: Rika
+//   Version: 0.1
+//   Purpose: Respawn Pak Files
+//  Category: Archive
+// File Mask: *.rpak
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+const uint32_t ID_WRAP = MakeFourCC('w', 'r', 'a', 'p');
+
+#define WRAP_FLAG_FILE_IS_COMPRESSED	0x1   // First bit seems to indicate the asset is compressed.
+#define WRAP_FLAG_FILE_IS_PERMANENT		0x4   // Fourth bit seems to indicate that the asset is streamed.
+#define WRAP_FLAG_FILE_IS_STREAMED		0x10
+
+struct WrapAssetHeader_v1_t
+{
+    uint32_t dataSize;
+    uint32_t unk_4;
+    PagePtr_t data;
+};
+
+struct WrapAssetHeader_v7_t
+{
+	PagePtr_t path;
+	PagePtr_t data;
+
+	uint32_t hash;
+	uint32_t cmpSize;
+	uint32_t dcmpSize;
+
+	uint16_t pathSize;
+	uint16_t skipFirstFolderPos;
+	uint16_t fileNamePos;
+
+	uint16_t flags;
+	uint16_t unk4;
+	uint8_t unk5[2];
+};
+
+void HandleWRAP(PakAsset_t& asset, uint64_t pageoffsets[])
+{
+    PageSeek(asset.headPagePtr);
+    switch (asset.version)
+    {
+    case 1:
+    {
+        WrapAssetHeader_v1_t hdr;
+
+        PageSeek(hdr.data);
+        char data[hdr.dataSize];
+
+        //const string name = DefaultAssetName(asset);
+
+        return;
+    }
+    case 7:
+    {
+        WrapAssetHeader_v7_t hdr;
+
+        //const string name = PageString(hdr.path);
+
+        break;
+    }
+    };
+
+    PageSeek(hdr.path);
+    char path[hdr.pathSize];
+
+    if ((hdr.flags & WRAP_FLAG_FILE_IS_STREAMED) == 0)
+    {
+        PageSeek(hdr.data);
+        const int dataSize = (hdr.flags & WRAP_FLAG_FILE_IS_COMPRESSED) ? hdr.cmpSize : hdr.dcmpSize;
+
+        if ((hdr.flags & WRAP_FLAG_FILE_IS_COMPRESSED) && (hdr.flags & WRAP_FLAG_FILE_IS_PERMANENT))
+        {
+            char data_unk[2];
+        }
+
+        char data[dataSize];
+    }
+}

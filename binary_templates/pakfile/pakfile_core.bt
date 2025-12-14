@@ -206,6 +206,7 @@ struct {
 #include "./pakfile_shdr.bt"
 #include "./pakfile_shds.bt"
 #include "./pakfile_hsys.bt"
+#include "./pakfile_wrap.bt"
 
 FSeek(startof(page_data));
 struct
@@ -347,6 +348,15 @@ struct
                 local int index = i;
                 HandleHSYS(assets[index], pageoffsets);
             } asset_hsys <read=DefaultAssetName(assets[index])>;
+
+            break;
+        }
+        case ID_WRAP:
+        {
+            struct {
+                local int index = i;
+                HandleWRAP(assets[index], pageoffsets);
+            } asset_wrap <read=DefaultAssetName(assets[index])>;
 
             break;
         }
